@@ -7,5 +7,8 @@ venv/
 # repos cloned locally as demo/analysis targets, not vendored
 data/repos/
 
+# generated output, regenerate with scripts/visualize.py
+data/*.html
+
 .ipynb_checkpoints/
 .DS_Store

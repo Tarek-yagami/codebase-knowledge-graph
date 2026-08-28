@@ -1,0 +1,360 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0d14;
+    --panel: rgba(16, 20, 30, 0.92);
+    --border: rgba(255,255,255,0.08);
+    --text: #e6e9ef;
+    --muted: #8b93a7;
+    --module: #4c9aff;
+    --class: #ffab4c;
+    --function: #57d48f;
+    --imports: #b98fff;
+    --inherits: #ff8fd6;
+    --calls: #5ad8d8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+  #graph { position: absolute; inset: 0; }
+
+  #legend {
+    position: absolute; top: 16px; left: 16px; z-index: 10;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; backdrop-filter: blur(8px);
+    font-size: 13px; line-height: 1.9;
+  }
+  #legend .title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  #legend .hint { color: var(--muted); font-size: 12px; margin-top: 6px; max-width: 220px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+  .dash { display: inline-block; width: 16px; height: 2px; margin-right: 8px; vertical-align: middle; }
+  #legend .section-label { color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; margin: 10px 0 2px; }
+
+  #toolbar {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 10;
+    display: flex; gap: 8px; align-items: center;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 8px 10px; backdrop-filter: blur(8px);
+  }
+  #toolbar button {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: 500;
+    padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s;
+  }
+  #toolbar button:hover { background: rgba(255,255,255,0.14); }
+  #toolbar button:disabled { opacity: 0.35; cursor: default; }
+  #toolbar .status { color: var(--muted); font-size: 12px; padding: 0 6px; white-space: nowrap; }
+
+  #panel {
+    position: absolute; top: 16px; right: 16px; width: 340px; max-height: calc(100vh - 32px);
+    overflow-y: auto; z-index: 10;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px; backdrop-filter: blur(8px); display: none;
+  }
+  #panel .kind { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  #panel .name { font-weight: 600; font-size: 16px; margin: 4px 0 2px; word-break: break-word; }
+  #panel .file { color: var(--muted); font-size: 12px; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; }
+  #panel .doc { font-size: 13px; color: #c7cce0; margin-bottom: 10px; white-space: pre-wrap; }
+  #panel pre { background: #05070c; border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11.5px; overflow-x: auto; color: #cfe8d8; }
+  #panel .close { position: absolute; top: 12px; right: 14px; cursor: pointer; color: var(--muted); font-size: 18px; }
+</style>
+</head>
+<body>
+<div id="graph"></div>
+
+<div id="toolbar">
+  <button id="btn-back" disabled onclick="goBack()">&lsaquo; Back</button>
+  <button id="btn-reset" disabled onclick="resetToOverview()">Reset to overview</button>
+  <span class="status" id="status">19 modules</span>
+</div>
+<div id="warning" style="display:none; position:absolute; top:70px; left:50%; transform:translateX(-50%); z-index:10;
+  background:#4a1414; border:1px solid #ff6b6b; color:#ffb3b3; padding:8px 16px; border-radius:8px; font-size:12px;"></div>
+
+<div id="legend">
+  <div class="title">__TITLE__</div>
+  <div class="section-label">Nodes</div>
+  <div><span class="dot" style="background:var(--module)"></span>module</div>
+  <div><span class="dot" style="background:var(--class)"></span>class</div>
+  <div><span class="dot" style="background:var(--function)"></span>function</div>
+  <div class="section-label">Relationships (lines)</div>
+  <div><span class="dash" style="background:var(--imports)"></span>imports</div>
+  <div><span class="dash" style="background:var(--inherits)"></span>inherits</div>
+  <div><span class="dash" style="background:var(--calls)"></span>calls</div>
+  <div class="hint">Click a module or class to enter it. Click the shell (or background) to step back out.</div>
+</div>
+
+<div id="panel">
+  <span class="close" onclick="document.getElementById('panel').style.display='none'">&times;</span>
+  <div class="kind" id="p-kind"></div>
+  <div class="name" id="p-name"></div>
+  <div class="file" id="p-file"></div>
+  <div class="doc" id="p-doc"></div>
+  <pre id="p-source" style="display:none"></pre>
+</div>
+
+<script>
+const DATA = __GRAPH_DATA__;
+
+const COLOR = { module: '#4c9aff', class: '#ffab4c', function: '#57d48f' };
+const SIZE = { module: 9, class: 6, function: 3.5 };
+
+const allNodes = new Map(DATA.nodes.map(n => [n.id, n]));
+const allLinks = DATA.links;
+
+// children via "defines" edges
+const childrenOf = new Map();
+for (const l of allLinks) {
+  if (l.kind === 'defines') {
+    if (!childrenOf.has(l.source)) childrenOf.set(l.source, []);
+    childrenOf.get(l.source).push(l.target);
+  }
+}
+
+// Navigation is a stack of scopes, root = []. Only the CURRENT scope's
+// children are ever in the scene at once - entering a node replaces the
+// whole scene with just that node's contents, like stepping into its own
+// self-contained world, rather than accumulating everything ever expanded.
+const scopeStack = [];
+
+function currentScopeId() {
+  return scopeStack.length ? scopeStack[scopeStack.length - 1] : null;
+}
+
+function scopeChildren(scopeId) {
+  if (scopeId === null) return DATA.nodes.filter(n => n.kind === 'module').map(n => n.id);
+  return childrenOf.get(scopeId) || [];
+}
+
+function endpointId(x) {
+  // 3d-force-graph mutates link.source/target from a plain id string into
+  // the actual node object the first time it renders that link - normalize
+  // back to the id so visibility checks keep working after that mutation.
+  return (x && typeof x === 'object') ? x.id : x;
+}
+
+function sceneDataFor(scopeId) {
+  const ids = new Set(scopeChildren(scopeId));
+  const nodes = [...ids].map(id => allNodes.get(id));
+  // Build brand-new link objects (plain string source/target) every time.
+  // 3d-force-graph mutates link.source/target into node-object references
+  // the first time it renders a link; reusing the same link objects across
+  // scope switches means some links in a batch are still plain strings
+  // while others already got mutated, and the library doesn't handle that
+  // mix reliably - links silently fail to attach to a visible node.
+  const links = allLinks
+    .filter(l => l.kind !== 'defines' && ids.has(endpointId(l.source)) && ids.has(endpointId(l.target)))
+    .map(l => ({ source: endpointId(l.source), target: endpointId(l.target), kind: l.kind }));
+
+  // Integrity check: surface it on-screen immediately if this is ever wrong,
+  // instead of guessing from how it looks.
+  const nodeIdSet = new Set(nodes.map(n => n.id));
+  const bad = links.filter(l => !nodeIdSet.has(l.source) || !nodeIdSet.has(l.target));
+  const warningEl = document.getElementById('warning');
+  if (bad.length) {
+    console.error('DANGLING LINKS', bad);
+    warningEl.textContent = `⚠ ${bad.length} dangling link(s) in this scope - see browser console for details`;
+    warningEl.style.display = 'block';
+  } else {
+    warningEl.style.display = 'none';
+  }
+
+  return { nodes, links };
+}
+
+const highlightNodes = new Set();
+const highlightLinks = new Set();
+
+const NODE_BASE_OPACITY = 0.95;
+const LINK_BASE_OPACITY = 0.85;
+const LINK_DIMMED_OPACITY = 0.05;
+// Deliberately far from the node-kind colors (blue/orange/green) so lines
+// are never confused with the node kind they connect.
+const LINK_COLOR = { imports: '#b98fff', inherits: '#ff8fd6', calls: '#5ad8d8' };
+
+const Graph = ForceGraph3D()(document.getElementById('graph'))
+  .backgroundColor('#0a0d14')
+  .nodeRelSize(4)
+  .graphData(sceneDataFor(null))
+  .nodeId('id')
+  .nodeLabel(n => `${n.kind}: ${n.name}`)
+  .nodeColor(n => highlightNodes.size && !highlightNodes.has(n) ? 'rgba(120,125,140,0.25)' : (COLOR[n.kind] || '#cccccc'))
+  .nodeVal(n => SIZE[n.kind] || 2)
+  .nodeOpacity(NODE_BASE_OPACITY)
+  .linkColor(l => highlightLinks.has(l) ? '#ffffff' : (LINK_COLOR[l.kind] || '#5ad8d8'))
+  .linkOpacity(l => highlightLinks.size && !highlightLinks.has(l) ? LINK_DIMMED_OPACITY : LINK_BASE_OPACITY)
+  .linkWidth(l => highlightLinks.has(l) ? 3 : 1.1)
+  .linkDirectionalParticles(l => highlightLinks.has(l) ? 3 : 1)
+  .linkDirectionalParticleWidth(l => highlightLinks.has(l) ? 2.6 : 1.6)
+  .linkDirectionalParticleSpeed(0.006)
+  .onNodeClick(node => {
+    showPanel(node);
+    if (childrenOf.has(node.id)) {
+      scopeStack.push(node.id);
+      renderScope();
+    }
+  })
+  .onBackgroundClick(() => {
+    // clicking the shell / empty space around it steps back up a level
+    if (scopeStack.length) goBack();
+  })
+  .onNodeHover(node => {
+    highlightNodes.clear();
+    highlightLinks.clear();
+    if (node) {
+      highlightNodes.add(node);
+      Graph.graphData().links.forEach(l => {
+        if (endpointId(l.source) === node.id || endpointId(l.target) === node.id) {
+          highlightLinks.add(l);
+          highlightNodes.add(allNodes.get(endpointId(l.source)));
+          highlightNodes.add(allNodes.get(endpointId(l.target)));
+        }
+      });
+    }
+    Graph.nodeColor(Graph.nodeColor()).linkColor(Graph.linkColor())
+      .linkOpacity(Graph.linkOpacity()).linkWidth(Graph.linkWidth())
+      .linkDirectionalParticles(Graph.linkDirectionalParticles());
+    document.getElementById('graph').style.cursor = node ? 'pointer' : 'default';
+  })
+let hasInitialFit = false;
+Graph.onEngineStop(() => {
+  if (!hasInitialFit && currentScopeId() === null) {
+    hasInitialFit = true;
+    Graph.zoomToFit(500, 70);
+  }
+});
+
+// The "world shell": a translucent sphere (seen from inside, via BackSide)
+// plus a wireframe cage, standing in for "you are now inside this node."
+// Only exists while inside a scope - the root overview has no shell.
+let shellMesh = null;
+let shellWire = null;
+
+function clearShell() {
+  if (shellMesh) { Graph.scene().remove(shellMesh); shellMesh = null; }
+  if (shellWire) { Graph.scene().remove(shellWire); shellWire = null; }
+}
+
+function buildShell(childCount) {
+  clearShell();
+  const radius = 55 + Math.sqrt(childCount) * 14;
+
+  // depthWrite: false + low renderOrder - the shell is a purely visual aura,
+  // it must never occlude nodes/edges behind it (nodes are opaque and would
+  // get properly hidden by it otherwise, while edges ignore its depth
+  // entirely - that mismatch is what looked like "phantom" dangling edges).
+  const fillGeo = new THREE.SphereGeometry(radius, 32, 24);
+  const fillMat = new THREE.MeshBasicMaterial({
+    color: 0x2d5bb8, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false,
+  });
+  shellMesh = new THREE.Mesh(fillGeo, fillMat);
+  shellMesh.renderOrder = -1;
+  Graph.scene().add(shellMesh);
+
+  const wireGeo = new THREE.SphereGeometry(radius, 16, 10);
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: 0x4c9aff, wireframe: true, transparent: true, opacity: 0.22, depthWrite: false,
+  });
+  shellWire = new THREE.Mesh(wireGeo, wireMat);
+  shellWire.renderOrder = -1;
+  Graph.scene().add(shellWire);
+
+  return radius;
+}
+
+// Keeps nodes from drifting past the shell wall - d3-force's charge/link
+// forces alone have no boundary, so without this nodes end up scattered
+// outside the sphere once the simulation settles.
+function containmentForce(radius) {
+  let nodes = [];
+  function force() {
+    for (const n of nodes) {
+      const d = Math.hypot(n.x, n.y, n.z) || 0.001;
+      if (d > radius) {
+        const pull = (d - radius) / d;
+        n.vx -= n.x * pull * 0.6;
+        n.vy -= n.y * pull * 0.6;
+        n.vz -= n.z * pull * 0.6;
+      }
+    }
+  }
+  force.initialize = ns => { nodes = ns; };
+  return force;
+}
+
+// Renders whatever scope is currently on top of the stack as a fresh,
+// self-contained scene - never mixed with siblings or the outer graph.
+function renderScope() {
+  highlightNodes.clear();
+  highlightLinks.clear();
+
+  const scopeId = currentScopeId();
+  const data = sceneDataFor(scopeId);
+
+  if (scopeId !== null) {
+    // fresh local layout every time you enter a world, regardless of
+    // wherever these nodes happened to sit the last time they were shown
+    data.nodes.forEach(n => {
+      n.x = (Math.random() - 0.5) * 20;
+      n.y = (Math.random() - 0.5) * 20;
+      n.z = (Math.random() - 0.5) * 20;
+      n.fx = n.fy = n.fz = undefined;
+    });
+  }
+
+  Graph.graphData(data);
+  updateToolbar(data.nodes.length);
+
+  if (scopeId === null) {
+    clearShell();
+    Graph.d3Force('containment', null);
+    setTimeout(() => Graph.zoomToFit(500, 70), 300);
+  } else {
+    const radius = buildShell(data.nodes.length);
+    Graph.d3Force('containment', containmentForce(radius * 0.8));
+    Graph.d3ReheatSimulation();
+    // frame the whole shell from outside it, not from inside looking out
+    setTimeout(() => Graph.cameraPosition({ x: 0, y: 0, z: radius * 2.3 }, { x: 0, y: 0, z: 0 }, 900), 300);
+  }
+}
+
+function goBack() {
+  if (scopeStack.length) scopeStack.pop();
+  renderScope();
+}
+
+function resetToOverview() {
+  scopeStack.length = 0;
+  renderScope();
+}
+
+function updateToolbar(nodeCount) {
+  document.getElementById('btn-back').disabled = scopeStack.length === 0;
+  document.getElementById('btn-reset').disabled = scopeStack.length === 0;
+  const crumbs = ['overview', ...scopeStack.map(id => allNodes.get(id).name.split('.').pop())];
+  document.getElementById('status').textContent = `${crumbs.join(' / ')} · ${nodeCount} shown`;
+}
+updateToolbar(Graph.graphData().nodes.length);
+
+function showPanel(n) {
+  document.getElementById('panel').style.display = 'block';
+  document.getElementById('p-kind').textContent = n.kind;
+  document.getElementById('p-name').textContent = n.name;
+  document.getElementById('p-file').textContent = n.file + ':' + n.lineno;
+  document.getElementById('p-doc').textContent = n.docstring || '';
+  const src = document.getElementById('p-source');
+  if (n.source) { src.style.display = 'block'; src.textContent = n.source; }
+  else { src.style.display = 'none'; }
+}
+</script>
+</body>
+</html>
