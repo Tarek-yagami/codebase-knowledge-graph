@@ -1,0 +1,1411 @@
+[
+  {
+    "question": "Compare BaseAdapter.send and Session.send: what does each one call, and how are they related?",
+    "baseline": {
+      "duration_api_ms": 25095,
+      "stop_reason": "end_turn",
+      "session_id": "936b3bcc-cd03-4a9a-8029-aeb9b8add8b8",
+      "total_cost_usd": 0.1396704,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 19171,
+        "cache_read_input_tokens": 220237,
+        "output_tokens": 1793,
+        "output_tokens_details": {
+          "thinking_tokens": 68
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 19171,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 969,
+            "cache_read_input_tokens": 51537,
+            "cache_creation_input_tokens": 1969,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1969
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 914,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000989,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 1793,
+          "cacheReadInputTokens": 220237,
+          "cacheCreationInputTokens": 19171,
+          "webSearchRequests": 0,
+          "costUSD": 0.13868139999999998,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 7,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "## `BaseAdapter.send` (adapters.py:128)\n\nAbstract method \u00e2\u20ac\u201d just `raise NotImplementedError`. It defines the transport-adapter interface: `send(request, stream, timeout, verify, cert, proxies) -> Response`.\n\nThe real work happens in `HTTPAdapter.send` (adapters.py:634), the concrete subclass Requests ships:\n- Gets a urllib3 connection via `get_connection_with_tls_context`\n- `cert_verify` / `add_headers`\n- Calls `conn.urlopen(...)` \u00e2\u20ac\u201d this is the actual network call, via urllib3\n- Catches urllib3/`ProtocolError`/`OSError` exceptions and translates them into `requests` exceptions (`ConnectionError`, `SSLError`, `ProxyError`, etc.)\n- Returns `self.build_response(request, resp)`, which wraps the raw urllib3 response into a `requests.Response`\n\n## `Session.send` (sessions.py:752)\n\nThis is the higher-level orchestration method:\n1. Merges/sets defaults (`stream`, `verify`, `cert`, `proxies`)\n2. Picks the right adapter with `self.get_adapter(url=request.url)` (matched by URL prefix, e.g. `http://` vs `https://`)\n3. **Calls `adapter.send(request, **kwargs)`** \u00e2\u20ac\u201d this is the actual network I/O\n4. Times the call (`r.elapsed`)\n5. Runs response hooks (`dispatch_hook(\"response\", ...)`)\n6. Extracts/persists cookies into `self.cookies`\n7. Handles redirects via `self.resolve_redirects(...)`, building `r.history`\n8. Reads `r.content` if not streaming\n\n## Relationship\n\n`Session.send` is the caller; `BaseAdapter.send`/`HTTPAdapter.send` is the callee it delegates to.\n\n- `BaseAdapter` defines the interface contract that any transport adapter (mounted via `session.mount(prefix, adapter)`) must implement.\n- `Session.send` doesn't do any actual networking itself \u00e2\u20ac\u201d it's a policy/orchestration layer (cookie jars, redirects, hooks, proxy/env resolution, timing) that hands off the literal \"make an HTTP request\" work to whichever adapter is registered for the request's URL scheme.\n- `HTTPAdapter.send` is the one concrete implementation of `BaseAdapter.send` shipped with `requests`, translating the abstract interface into actual urllib3 `urlopen` calls and building a `Response`.\n\nSo the call chain for a typical `requests.get(...)` is: `Session.send` \u00e2\u2020\u2019 `self.get_adapter(url)` \u00e2\u2020\u2019 `adapter.send(request, ...)` (i.e. `HTTPAdapter.send`) \u00e2\u2020\u2019 `conn.urlopen(...)` \u00e2\u2020\u2019 `self.build_response(...)` \u00e2\u2020\u2019 back up to `Session.send` for redirect/cookie/hook handling.",
+      "ttft_ms": 3107,
+      "type": "result",
+      "duration_ms": 24725,
+      "uuid": "f653d3c8-32c2-42e4-8518-973d8574e20f",
+      "ttft_stream_ms": 2090,
+      "time_to_request_ms": 260,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 18492,
+      "stop_reason": "end_turn",
+      "session_id": "09a8dde0-9afd-4da3-91ff-6cca1d5cc350",
+      "total_cost_usd": 0.1227884,
+      "usage": {
+        "input_tokens": 8,
+        "cache_creation_input_tokens": 17618,
+        "cache_read_input_tokens": 169457,
+        "output_tokens": 1742,
+        "output_tokens_details": {
+          "thinking_tokens": 138
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 17618,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 976,
+            "cache_read_input_tokens": 45371,
+            "cache_creation_input_tokens": 6582,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 6582
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 914,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000989,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 8,
+          "outputTokens": 1742,
+          "cacheReadInputTokens": 169457,
+          "cacheCreationInputTokens": 17618,
+          "webSearchRequests": 0,
+          "costUSD": 0.1217994,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 6,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`BaseAdapter.send` (`adapters.py:128`) is just the abstract interface \u00e2\u20ac\u201d it takes the same signature (`request, stream, timeout, verify, cert, proxies`) but the body is `raise NotImplementedError`. It defines the contract that any transport adapter must implement, but calls nothing itself.\n\n`HTTPAdapter.send` (`adapters.py:634`) is the concrete subclass implementation of that interface. It does the actual low-level work:\n- Gets a urllib3 connection via `self.get_connection_with_tls_context(...)`\n- Calls `self.cert_verify`, `self.request_url`, `self.add_headers`\n- Calls `conn.urlopen(...)` \u00e2\u20ac\u201d the actual network I/O through urllib3\n- Wraps exceptions (`ProtocolError`, `MaxRetryError`, `SSLError`, etc.) into requests' own exception types\n- Returns `self.build_response(request, resp)`, converting the urllib3 response into a `requests.Response`\n\n`Session.send` (`sessions.py:752`) sits one layer above and is the orchestrator, not a transport implementation:\n- Merges/sets defaults (`stream`, `verify`, `cert`, `proxies`)\n- Picks the right transport adapter for the URL: `adapter = self.get_adapter(url=request.url)`\n- Calls `r = adapter.send(request, **kwargs)` \u00e2\u20ac\u201d this is the one call to the adapter interface, dispatching to whichever concrete adapter (typically `HTTPAdapter`) is mounted for that URL scheme\n- Times the call (`elapsed`), runs the `response` hook via `dispatch_hook`\n- Persists cookies into the session's cookie jar (`extract_cookies_to_jar`)\n- Handles redirects via `self.resolve_redirects(...)` if `allow_redirects`\n- Consumes `r.content` if not streaming, then returns the final `Response`\n\n**Relationship:** `Session.send` is the high-level API entry point that handles session-level concerns (cookies, redirects, hooks, defaults) and delegates the actual \"put bytes on the wire\" work to `adapter.send`, which is `BaseAdapter.send`'s contract fulfilled concretely by `HTTPAdapter.send`. So the call chain is: `Session.send` \u00e2\u2020\u2019 `adapter.send` (polymorphic dispatch to `HTTPAdapter.send` or a custom adapter) \u00e2\u2020\u2019 `urllib3`'s `conn.urlopen`. `BaseAdapter` itself never calls anything \u00e2\u20ac\u201d it exists purely so `Session` can call `adapter.send(...)` without knowing which concrete adapter is mounted.",
+      "ttft_ms": 1551,
+      "type": "result",
+      "duration_ms": 17900,
+      "uuid": "69744dd8-7164-460e-ac6b-b88f45a3ab77",
+      "ttft_stream_ms": 944,
+      "time_to_request_ms": 84,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "What does ConnectTimeout inherit from, and if I catch ConnectionError, would that also catch a ConnectTimeout?",
+    "baseline": {
+      "duration_api_ms": 6107,
+      "stop_reason": "end_turn",
+      "session_id": "ecf7d7e1-ebc0-4d93-b369-4cac651253ed",
+      "total_cost_usd": 0.0625366,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 10460,
+        "cache_read_input_tokens": 78838,
+        "output_tokens": 393,
+        "output_tokens_details": {
+          "thinking_tokens": 51
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 10460,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 198,
+            "cache_read_input_tokens": 44503,
+            "cache_creation_input_tokens": 292,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 292
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 916,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0009910000000000001,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 4,
+          "outputTokens": 393,
+          "cacheReadInputTokens": 78838,
+          "cacheCreationInputTokens": 10460,
+          "webSearchRequests": 0,
+          "costUSD": 0.06154559999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 2,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`ConnectTimeout` is defined at `exceptions.py:91` as:\n\n```python\nclass ConnectTimeout(ConnectionError, Timeout):\n```\n\nSo it inherits from both `ConnectionError` and `Timeout` (multiple inheritance), which both in turn derive from `RequestException`.\n\nYes \u00e2\u20ac\u201d since `ConnectTimeout` is a subclass of `ConnectionError`, `except ConnectionError:` would also catch a `ConnectTimeout`. (It would equally be caught by `except Timeout:`.)",
+      "ttft_ms": 1929,
+      "type": "result",
+      "duration_ms": 5581,
+      "uuid": "f677198a-c7b0-48fb-8fdb-c07f443e6ac7",
+      "ttft_stream_ms": 1284,
+      "time_to_request_ms": 358,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 7069,
+      "stop_reason": "end_turn",
+      "session_id": "41d8f624-7c2e-43d7-8ad3-d1da29a2b792",
+      "total_cost_usd": 0.0630322,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 10747,
+        "cache_read_input_tokens": 79126,
+        "output_tokens": 322,
+        "output_tokens_details": {
+          "thinking_tokens": 31
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 10747,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 128,
+            "cache_read_input_tokens": 44791,
+            "cache_creation_input_tokens": 291,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 291
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 916,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0009910000000000001,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 4,
+          "outputTokens": 322,
+          "cacheReadInputTokens": 79126,
+          "cacheCreationInputTokens": 10747,
+          "webSearchRequests": 0,
+          "costUSD": 0.0620412,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 2,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`ConnectTimeout` inherits from both `ConnectionError` and `Timeout` (requests/exceptions.py:91), each of which inherits from `RequestException`.\n\nSo yes \u00e2\u20ac\u201d `except ConnectionError:` will catch a `ConnectTimeout`, since it's a subclass (via multiple inheritance). It'll also be caught by `except Timeout:` for the same reason.",
+      "ttft_ms": 1592,
+      "type": "result",
+      "duration_ms": 6268,
+      "uuid": "4a3d5827-7ddc-44b8-81f0-3c1288663fcd",
+      "ttft_stream_ms": 981,
+      "time_to_request_ms": 86,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "Does HTTPProxyAuth define its own __init__ method, or does it inherit one? Where does it actually come from?",
+    "baseline": {
+      "duration_api_ms": 8717,
+      "stop_reason": "end_turn",
+      "session_id": "809d5d2b-8ce7-4d5b-8962-a5734beb96c3",
+      "total_cost_usd": 0.07500420000000001,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 11240,
+        "cache_read_input_tokens": 123621,
+        "output_tokens": 432,
+        "output_tokens_details": {
+          "thinking_tokens": 16
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 11240,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 128,
+            "cache_read_input_tokens": 44787,
+            "cache_creation_input_tokens": 788,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 788
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 918,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000988,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 6,
+          "outputTokens": 432,
+          "cacheReadInputTokens": 123621,
+          "cacheCreationInputTokens": 11240,
+          "webSearchRequests": 0,
+          "costUSD": 0.0740162,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 3,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`HTTPProxyAuth` (src/requests/auth.py:116) does not define its own `__init__`. It inherits `HTTPBasicAuth.__init__` (auth.py:96), which just sets `self.username` and `self.password`. `HTTPProxyAuth` only overrides `__call__` to use the `Proxy-Authorization` header instead of `Authorization`.",
+      "ttft_ms": 3030,
+      "type": "result",
+      "duration_ms": 8336,
+      "uuid": "ef1fbb10-c9a5-495a-81ff-e7b360bfab35",
+      "ttft_stream_ms": 2364,
+      "time_to_request_ms": 275,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 7560,
+      "stop_reason": "end_turn",
+      "session_id": "70cbf376-4791-42c5-9ade-3f8dc2b10742",
+      "total_cost_usd": 0.07630119999999999,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 11428,
+        "cache_read_input_tokens": 124446,
+        "output_tokens": 471,
+        "output_tokens_details": {
+          "thinking_tokens": 41
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 11428,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 130,
+            "cache_read_input_tokens": 45326,
+            "cache_creation_input_tokens": 437,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 437
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 918,
+          "outputTokens": 12,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000978,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 6,
+          "outputTokens": 471,
+          "cacheReadInputTokens": 124446,
+          "cacheCreationInputTokens": 11428,
+          "webSearchRequests": 0,
+          "costUSD": 0.07532319999999998,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 3,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`HTTPProxyAuth` (auth.py:116) does not define its own `__init__`. It inherits it from `HTTPBasicAuth` (auth.py:96), which sets `self.username` and `self.password`. `HTTPProxyAuth` only overrides `__call__` (auth.py:119-121) to set the `Proxy-Authorization` header instead of `Authorization`.",
+      "ttft_ms": 1649,
+      "type": "result",
+      "duration_ms": 6857,
+      "uuid": "706b33b4-f624-4eaf-9392-dccfb9a50ccd",
+      "ttft_stream_ms": 1036,
+      "time_to_request_ms": 87,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "What's the difference between the top-level requests.get and Session.get, and what does each one call internally?",
+    "baseline": {
+      "duration_api_ms": 18512,
+      "stop_reason": "end_turn",
+      "session_id": "18ecd4f0-fa6a-4708-abe0-ecd48e7525c6",
+      "total_cost_usd": 0.1307898,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 17712,
+        "cache_read_input_tokens": 223274,
+        "output_tokens": 1427,
+        "output_tokens_details": {
+          "thinking_tokens": 88
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 17712,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 830,
+            "cache_read_input_tokens": 48535,
+            "cache_creation_input_tokens": 3512,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 3512
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 917,
+          "outputTokens": 16,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000997,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 1427,
+          "cacheReadInputTokens": 223274,
+          "cacheCreationInputTokens": 17712,
+          "webSearchRequests": 0,
+          "costUSD": 0.1297928,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 5,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "I have what I need to answer clearly.\n\n## `requests.get()` (api.py:74-87)\n\nA convenience wrapper that creates a **brand-new, throwaway `Session`** for a single request:\n\n```python\ndef get(url, params=None, **kwargs):\n    return request(\"get\", url, params=params, **kwargs)\n```\n\nwhich calls `requests.request()` (api.py:24-71):\n\n```python\ndef request(method, url, **kwargs):\n    with sessions.Session() as session:\n        return session.request(method=method, url=url, **kwargs)\n```\n\nSo `requests.get(url)` internally: instantiates a new `Session()`, calls `session.request(\"get\", url, ...)` on it, and closes the session (releasing its connection pool) once the `with` block exits. Every top-level call (`get`, `post`, `head`, etc.) pays this cost of a fresh session \u00e2\u20ac\u201d no connection reuse or cookie persistence across calls.\n\n## `Session.get()` (sessions.py:655-671)\n\nA method on an existing `Session` object you already created and presumably intend to reuse:\n\n```python\ndef get(self, url, params=None, **kwargs):\n    kwargs.setdefault(\"allow_redirects\", True)\n    return self.request(\"GET\", url, params=params, **kwargs)\n```\n\nIt calls `self.request(...)` (sessions.py:557-653), which does the real work:\n1. Builds a `Request` object, then `self.prepare_request(req)` \u00e2\u20ac\u201d merging in the session's `cookies`, `auth`, `headers`, params, etc. into a `PreparedRequest`.\n2. `self.merge_environment_settings(...)` \u00e2\u20ac\u201d merges session-level `proxies`, `verify`, `cert`, environment/`.netrc` settings with per-call overrides.\n3. `self.send(prep, **send_kwargs)` (sessions.py:752) \u00e2\u20ac\u201d picks the transport adapter via `get_adapter(url)`, actually sends the request over the (possibly already open/pooled) connection, and handles redirects/history via `SessionRedirectMixin`.\n\n## The key difference\n\n`Session.get` reuses the **same** underlying TCP connection pool, cookie jar, and any session-level config (headers, auth, proxies) across multiple calls, because you keep the `Session` object alive. `requests.get` is just sugar for \"make a one-off `Session`, do one request, throw it away\" \u00e2\u20ac\u201d convenient for a single call, but wasteful (new TCP/TLS handshake, no cookie persistence) if you're making several requests to the same host, which is why the docs recommend using a `Session` for that case.",
+      "ttft_ms": 1874,
+      "type": "result",
+      "duration_ms": 18219,
+      "uuid": "54741faa-981a-4802-8ff8-3b0630b17862",
+      "ttft_stream_ms": 1279,
+      "time_to_request_ms": 371,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 17926,
+      "stop_reason": "end_turn",
+      "session_id": "b5105ef5-d1e7-45fa-98d3-5e5bc0af6204",
+      "total_cost_usd": 0.11993480000000001,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 15361,
+        "cache_read_input_tokens": 219594,
+        "output_tokens": 1356,
+        "output_tokens_details": {
+          "thinking_tokens": 27
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 15361,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 718,
+            "cache_read_input_tokens": 47916,
+            "cache_creation_input_tokens": 1780,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1780
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 917,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000992,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 1356,
+          "cacheReadInputTokens": 219594,
+          "cacheCreationInputTokens": 15361,
+          "webSearchRequests": 0,
+          "costUSD": 0.11894279999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 5,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "I now have the full picture.\n\n**`requests.get` (top-level, in `api.py`)**\n\n```python\ndef get(url, params=None, **kwargs):\n    return request(\"get\", url, params=params, **kwargs)\n```\n\nwhich calls `api.request()`:\n\n```python\ndef request(method, url, **kwargs):\n    with sessions.Session() as session:\n        return session.request(method=method, url=url, **kwargs)\n```\n\nSo `requests.get` is a convenience wrapper that **creates a brand-new `Session` for every single call**, uses it once (inside a `with` block so it's closed/its connections released afterward), and delegates to that session's `.request()`. No cookies, connection pool, or adapters persist between calls \u00e2\u20ac\u201d each top-level `requests.get/post/etc.` call pays the cost of a fresh session.\n\n**`Session.get` (in `sessions.py:655`)**\n\n```python\ndef get(self, url, params=None, **kwargs):\n    kwargs.setdefault(\"allow_redirects\", True)\n    return self.request(\"GET\", url, params=params, **kwargs)\n```\n\nIt just defaults `allow_redirects=True` and calls `self.request(...)` \u00e2\u20ac\u201d `Session.request` at `sessions.py:557`, which:\n1. Builds a `Request` object from the args.\n2. Calls `self.prepare_request(req)` to merge in session-level state (cookies, auth, headers, hooks) and produce a `PreparedRequest`.\n3. Calls `self.merge_environment_settings(...)` to merge proxies/verify/cert/trust_env with session defaults.\n4. Calls `self.send(prep, **send_kwargs)`, which is where the actual connection pooling/adapter dispatch and cookie extraction happens.\n\n**Key difference:** `requests.get` is stateless \u00e2\u20ac\u201d it spins up (and tears down) a whole new `Session` per call, so nothing (connection pool, cookies, auth, adapters) is reused across requests. `Session.get` reuses an existing `Session` instance, so it benefits from persistent connection pooling (keep-alive), shared cookies, and any configured auth/headers/adapters \u00e2\u20ac\u201d it's the same underlying machinery, just without the \"create a throwaway session\" wrapper.",
+      "ttft_ms": 1727,
+      "type": "result",
+      "duration_ms": 17252,
+      "uuid": "703f7bdb-4d32-4d2c-a467-99af6e4a9c7d",
+      "ttft_stream_ms": 1017,
+      "time_to_request_ms": 84,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "What would break if I changed the signature of Session.prepare_request?",
+    "baseline": {
+      "duration_api_ms": 27625,
+      "stop_reason": "end_turn",
+      "session_id": "8d5a55b4-d6fd-4702-8b96-7e80debe780e",
+      "total_cost_usd": 0.1302782,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 16175,
+        "cache_read_input_tokens": 217081,
+        "output_tokens": 2116,
+        "output_tokens_details": {
+          "thinking_tokens": 160
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 16175,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 800,
+            "cache_read_input_tokens": 48127,
+            "cache_creation_input_tokens": 2383,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2383
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 907,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000982,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 2116,
+          "cacheReadInputTokens": 217081,
+          "cacheCreationInputTokens": 16175,
+          "webSearchRequests": 0,
+          "costUSD": 0.1292962,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 9,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Based on the code, here's what depends on `Session.prepare_request(self, request: Request) -> PreparedRequest`:\n\n**Internal callers**\n- `Session.request()` at sessions.py:635 \u00e2\u20ac\u201d every single `session.get/post/put/...` call goes through this, since `request()` builds a `Request` and calls `self.prepare_request(req)` then `self.send(prep)`. Changing the signature (positional order, return type, adding required params) breaks the core request flow.\n\n**Public API / documented usage**\n- It's a documented, public method (docs/user/advanced.rst:165,172,201) \u00e2\u20ac\u201d the canonical way users build a `PreparedRequest` with session state (merged cookies/headers/auth/hooks) without sending it, e.g. for modifying `prepped.body` before `session.send()`. Any signature change is a breaking change for users following that pattern, and for anyone subclassing `Session` and overriding `prepare_request` (a common customization point, e.g. adding custom auth/header merging).\n\n**Tests** (tests/test_requests.py) \u00e2\u20ac\u201d ~10 call sites, all invoke it as `session.prepare_request(request)` positionally with a single `Request` object: lines 175, 324, 341, 501, 515, 629, 1163, 1197, 1207, 1222, 1251, 1259. Any of these would need updating if the signature changes shape.\n\n**What specifically would break depending on the change:**\n- Reordering/renaming the `request` parameter \u00e2\u2020\u2019 breaks any caller using `prepare_request(request=...)` as a keyword (none currently do, but it's public API so third-party code might).\n- Changing the return type from `PreparedRequest` \u00e2\u2020\u2019 breaks `request()`'s `assert _is_prepared(prep)` check (sessions.py:637) and every test that calls `.headers`/`.hooks`/`.url`/`.method` on the result.\n- Adding a required parameter \u00e2\u2020\u2019 breaks all ~13 call sites (1 internal + tests) plus any third-party code and the documented advanced.rst examples.\n- Subclasses that override `prepare_request` (common in requests-based libraries like `requests-oauthlib`, `requests-toolbelt`) would silently mismatch signatures if you change parameter semantics, even without touching call sites in this repo.\n\nSo the blast radius is: `Session.request()` (core), the full test suite exercising sessions, the documented public API/examples, and third-party subclasses/wrappers outside this repo that override or call this method directly.",
+      "ttft_ms": 2663,
+      "type": "result",
+      "duration_ms": 27582,
+      "uuid": "dd1941b6-a882-4781-a0cf-ea69e768d0b1",
+      "ttft_stream_ms": 2043,
+      "time_to_request_ms": 318,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 19425,
+      "stop_reason": "end_turn",
+      "session_id": "57f14974-e09f-4249-a221-51f2e44fb6bb",
+      "total_cost_usd": 0.1367734,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 18960,
+        "cache_read_input_tokens": 225707,
+        "output_tokens": 1479,
+        "output_tokens_details": {
+          "thinking_tokens": 542
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 18960,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 914,
+            "cache_read_input_tokens": 50902,
+            "cache_creation_input_tokens": 2393,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2393
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 907,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000982,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 1479,
+          "cacheReadInputTokens": 225707,
+          "cacheCreationInputTokens": 18960,
+          "webSearchRequests": 0,
+          "costUSD": 0.1357914,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 5,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Changing `Session.prepare_request(self, request: Request) -> PreparedRequest` (src/requests/sessions.py:511) touches more than internal code:\n\n- **Internal caller**: `Session.request()` at sessions.py:635 calls `self.prepare_request(req)` \u00e2\u20ac\u201d any signature change must stay compatible here.\n- **Public documented API**: `docs/user/advanced.rst` explicitly tells users to call `s.prepare_request(req)` directly as the recommended way to merge session state (cookies/auth/headers) into a `PreparedRequest` without sending it \u00e2\u20ac\u201d this is a documented, user-facing entry point, not an internal helper.\n- **Subclassing hook**: Because it's public and documented, third-party libraries (auth wrappers, OAuth libraries, custom session subclasses) commonly override `prepare_request` and call `super().prepare_request(request)`. A signature change breaks any such override.\n- **Test suite**: `tests/test_requests.py` has ~10 direct call sites exercising it (params ordering, headers, hooks, auth, bytestring URLs, etc.) \u00e2\u20ac\u201d all would need updating for a new signature.\n\nSo it's effectively part of requests' public API surface (documented since old versions per HISTORY.md), meaning a signature change is a breaking change for downstream users, not just a safe internal refactor.",
+      "ttft_ms": 1628,
+      "type": "result",
+      "duration_ms": 19002,
+      "uuid": "7312719c-3281-4180-8c9f-bdafa5200a2c",
+      "ttft_stream_ms": 1058,
+      "time_to_request_ms": 84,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "Which classes implement a close() method, and how are they related to each other?",
+    "baseline": {
+      "duration_api_ms": 23825,
+      "stop_reason": "end_turn",
+      "session_id": "1eace8cb-26b5-4673-b262-4702718450a3",
+      "total_cost_usd": 0.11913099999999999,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 13442,
+        "cache_read_input_tokens": 216095,
+        "output_tokens": 2115,
+        "output_tokens_details": {
+          "thinking_tokens": 65
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13442,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 684,
+            "cache_read_input_tokens": 47150,
+            "cache_creation_input_tokens": 627,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 627
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 909,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0009739999999999999,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 2115,
+          "cacheReadInputTokens": 216095,
+          "cacheCreationInputTokens": 13442,
+          "webSearchRequests": 0,
+          "costUSD": 0.11815699999999998,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 11,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Four classes implement `close()`, forming a chain that mirrors how requests actually flows through the library:\n\n**`BaseAdapter`** (`adapters.py:122`) \u00e2\u20ac\u201d abstract base for transport adapters, declares `close()` as `raise NotImplementedError` (`adapters.py:153-155`), an interface contract.\n\n**`HTTPAdapter`** (`adapters.py:158`) \u00e2\u20ac\u201d the concrete implementation. Its `close()` (`adapters.py:555`) disposes of the urllib3 `PoolManager` and any `ProxyManager`, closing pooled connections. This is the adapter registered by default for `http://` and `https://` prefixes.\n\n**`Session`** (`sessions.py:395`, mixes in `SessionRedirectMixin`) \u00e2\u20ac\u201d its `close()` (`sessions.py:883`) simply iterates `self.adapters.values()` and calls `close()` on each mounted adapter. So `Session.close()` delegates down to `HTTPAdapter.close()` (or whatever adapters are mounted). `Session` also implements `__enter__`/`__exit__`, so `with Session() as s:` calls `close()` automatically on exit.\n\n**`Response`** (`models.py:732`) \u00e2\u20ac\u201d unrelated by inheritance to the other three; its `close()` (`models.py:1173`) is about releasing the individual HTTP connection back to the pool (closing `self.raw` if content wasn't consumed, calling `release_conn()`). It also has `__enter__`/`__exit__` calling `self.close()`.\n\nRelationship summary: `Session.close()` \u00e2\u2020\u2019 calls `close()` on every adapter it owns \u00e2\u2020\u2019 for `HTTPAdapter` this tears down the whole connection pool. `Response.close()` is a separate, finer-grained concern \u00e2\u20ac\u201d releasing one connection back to a pool that a `Session`/`HTTPAdapter` still owns; it doesn't call into the adapter or session at all, just touches the underlying `urllib3` response object (`self.raw`). Both `Session` and `Response` support the context-manager protocol so `close()` is invoked automatically via `with`.",
+      "ttft_ms": 1808,
+      "type": "result",
+      "duration_ms": 23392,
+      "uuid": "078ea463-f9d5-4af7-b837-07f1e74c4dd2",
+      "ttft_stream_ms": 1230,
+      "time_to_request_ms": 307,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 14072,
+      "stop_reason": "end_turn",
+      "session_id": "51ba7bcd-df3d-44d0-8a2d-64d1fbc1651e",
+      "total_cost_usd": 0.089423,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 13101,
+        "cache_read_input_tokens": 124215,
+        "output_tokens": 1119,
+        "output_tokens_details": {
+          "thinking_tokens": 105
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13101,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 451,
+            "cache_read_input_tokens": 45094,
+            "cache_creation_input_tokens": 2342,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2342
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 909,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.0009739999999999999,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 6,
+          "outputTokens": 1119,
+          "cacheReadInputTokens": 124215,
+          "cacheCreationInputTokens": 13101,
+          "webSearchRequests": 0,
+          "costUSD": 0.088449,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 6,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Four classes implement `close()`, forming a clear delegation chain:\n\n- **`BaseAdapter`** (`adapters.py:153`) \u00e2\u20ac\u201d abstract base defining the transport adapter interface; `close()` raises `NotImplementedError`, meant to be overridden.\n- **`HTTPAdapter`** (`adapters.py:555`) \u00e2\u20ac\u201d subclasses `BaseAdapter`; its `close()` actually clears the urllib3 `PoolManager` and any `ProxyManager`s, releasing pooled connections.\n- **`Response`** (`models.py:1173`) \u00e2\u20ac\u201d unrelated to the adapter hierarchy; `close()` releases the underlying raw connection (`self.raw.close()` / `release_conn()`) back to the pool once the response body has been consumed.\n- **`Session`** (`sessions.py:883`) \u00e2\u20ac\u201d holds a `prefix -> adapter` mapping (`self.adapters`); its `close()` iterates over all mounted adapters and calls `close()` on each, which is what actually invokes `HTTPAdapter.close()`.\n\nSo the relationship is: `Session.close()` \u00e2\u2020\u2019 calls `close()` on every mounted `BaseAdapter`/`HTTPAdapter` instance \u00e2\u2020\u2019 which tears down the connection pools. `Response.close()` is a separate, per-request cleanup path (releasing one connection back to the pool), not part of that adapter-cascade.",
+      "ttft_ms": 2754,
+      "type": "result",
+      "duration_ms": 13424,
+      "uuid": "b624703e-514f-466f-ac78-7770c4376771",
+      "ttft_stream_ms": 1002,
+      "time_to_request_ms": 89,
+      "queued_turn_count": 0
+    },
+    "old_graph_before_fix": {
+      "duration_api_ms": 34685,
+      "stop_reason": "end_turn",
+      "session_id": "1bde7df8-8507-44af-abf2-37ff58b881dd",
+      "total_cost_usd": 0.1365966,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 14403,
+        "cache_read_input_tokens": 263608,
+        "output_tokens": 2526,
+        "output_tokens_details": {
+          "thinking_tokens": 142
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 14403,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 902,
+            "cache_read_input_tokens": 47630,
+            "cache_creation_input_tokens": 1108,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1108
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 909,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000979,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 12,
+          "outputTokens": 2526,
+          "cacheReadInputTokens": 263608,
+          "cacheCreationInputTokens": 14403,
+          "webSearchRequests": 0,
+          "costUSD": 0.1356176,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 13,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "I now have the full picture. Four classes implement `close()` in the `requests` library, and they form a clear caller chain from session down to the underlying connection:\n\n**1. `BaseAdapter`** (`adapters.py:122`)\nAbstract base for transport adapters. Its `close()` (`adapters.py:153`) just raises `NotImplementedError` \u00e2\u20ac\u201d it's a contract that subclasses must fulfill.\n\n**2. `HTTPAdapter(BaseAdapter)`** (`adapters.py:158`)\nThe concrete adapter. Its `close()` (`adapters.py:555`) clears the urllib3 `PoolManager` and any per-proxy `ProxyManager`, which releases all pooled connections.\n\n**3. `Response`** (`models.py:732`, no base class)\nIts `close()` (`models.py:1173`) closes the raw urllib3 response (`self.raw.close()`) if the body hasn't been fully read, and calls `release_conn()` on it to return the connection to the pool. This is the lowest-level cleanup, operating on a single response's underlying socket/connection.\n\n**4. `Session(SessionRedirectMixin)`** (`sessions.py:395`)\nIts `close()` (`sessions.py:883`) iterates over `self.adapters` (the mapping of URL-prefix \u00e2\u2020\u2019 adapter set up via `mount()`) and calls `close()` on each one \u00e2\u20ac\u201d delegating to `HTTPAdapter.close()`.\n\n**Relationship / call chain:**\n\n```\nSession.close()\n  \u00e2\u201d\u201d\u00e2\u201d\u20ac for each mounted adapter: HTTPAdapter.close()   (implements BaseAdapter.close)\n        \u00e2\u201d\u201d\u00e2\u201d\u20ac poolmanager.clear() + proxy_manager[*].clear()\n\nResponse.close()   (independent path)\n  \u00e2\u201d\u201d\u00e2\u201d\u20ac raw.close() + raw.release_conn()\n```\n\n- `Session` owns a dict of `BaseAdapter` instances (mounted per URL prefix via `Session.mount()`), so `Session.close()` is a fan-out that closes every adapter it holds.\n- `HTTPAdapter` is the sole concrete implementation of `BaseAdapter` in this codebase, closing urllib3's pool managers.\n- `Response.close()` is separate and lower-level \u00e2\u20ac\u201d it releases one connection back to whatever pool it came from (via urllib3's `release_conn`), rather than tearing down the pool itself. A `Response` doesn't hold a reference to the `Session` or `Adapter`; it only holds `raw`, the underlying urllib3 response object.\n- So the two paths aren't parent/child in code, but conceptually layered: `Session.close()` \u00e2\u2020\u2019 `HTTPAdapter.close()` tears down the whole connection pool infrastructure, while `Response.close()` just returns one connection to that pool.",
+      "ttft_ms": 2505,
+      "type": "result",
+      "duration_ms": 34002,
+      "uuid": "fec6850f-ec24-468f-95e9-75b391ffd411",
+      "ttft_stream_ms": 1817,
+      "time_to_request_ms": 86,
+      "queued_turn_count": 0
+    }
+  }
+]

@@ -15,3 +15,6 @@ data/*.html
 
 # machine-specific absolute paths, see .mcp.json.example
 .mcp.json
+
+# local MCP approval state and other personal Claude Code state, not shared
+.claude/

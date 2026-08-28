@@ -1,0 +1,1411 @@
+[
+  {
+    "question": "What's the full inheritance chain for HttpResponseNotFound up to its base class, and which sibling response classes share that same base? Watch out for classes that look like siblings but actually aren't.",
+    "baseline": {
+      "duration_api_ms": 19457,
+      "stop_reason": "end_turn",
+      "session_id": "f78891c4-8f4c-493a-acca-695e13f1fc6b",
+      "total_cost_usd": 0.119575,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 13111,
+        "cache_read_input_tokens": 259470,
+        "output_tokens": 1421,
+        "output_tokens_details": {
+          "thinking_tokens": 389
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13111,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 468,
+            "cache_read_input_tokens": 45603,
+            "cache_creation_input_tokens": 1843,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1843
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 933,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001003,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 12,
+          "outputTokens": 1421,
+          "cacheReadInputTokens": 259470,
+          "cacheCreationInputTokens": 13111,
+          "webSearchRequests": 0,
+          "costUSD": 0.118572,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 6,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "## Inheritance chain\n\n```\nHttpResponseNotFound \u00e2\u2020\u2019 HttpResponse \u00e2\u2020\u2019 HttpResponseBase \u00e2\u2020\u2019 object\n```\n\n(`django/http/response.py:708`, `:377`, `:110`)\n\n## True siblings (direct subclasses of `HttpResponse`, same as `HttpResponseNotFound`)\n\n- `HttpResponseNotModified` (304)\n- `HttpResponseBadRequest` (400)\n- `HttpResponseForbidden` (403)\n- `HttpResponseNotAllowed` (405)\n- `HttpResponseGone` (410)\n- `HttpResponseServerError` (500)\n- `HttpResponseRedirectBase` itself (an intermediate base, not a concrete response)\n\n## Look-alikes that are *not* actual siblings\n\n- **`HttpResponseRedirect`** and **`HttpResponsePermanentRedirect`** \u00e2\u20ac\u201d same `HttpResponse...` naming pattern, but they don't inherit `HttpResponse` directly. They inherit `HttpResponseRedirectBase`, which itself inherits `HttpResponse`. So they're one level further down the chain than `HttpResponseNotFound`, not true siblings.\n- **`Http404`** \u00e2\u20ac\u201d despite the near-identical name, this is a completely unrelated class: it subclasses `Exception`, not `HttpResponseBase` at all. It's the exception views raise to trigger a 404, not a response object.",
+      "ttft_ms": 1852,
+      "type": "result",
+      "duration_ms": 19296,
+      "uuid": "e41f049d-e3d1-4acb-9865-9bef26179f3b",
+      "ttft_stream_ms": 1284,
+      "time_to_request_ms": 274,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 21528,
+      "stop_reason": "end_turn",
+      "session_id": "b8e78c5b-36ae-4984-a85d-15c3c57e48a1",
+      "total_cost_usd": 0.117972,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 12424,
+        "cache_read_input_tokens": 261245,
+        "output_tokens": 1500,
+        "output_tokens_details": {
+          "thinking_tokens": 382
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 12424,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 521,
+            "cache_read_input_tokens": 46107,
+            "cache_creation_input_tokens": 652,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 652
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 933,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001003,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 12,
+          "outputTokens": 1500,
+          "cacheReadInputTokens": 261245,
+          "cacheCreationInputTokens": 12424,
+          "webSearchRequests": 0,
+          "costUSD": 0.11696899999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 6,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "**Inheritance chain:**\n\n`HttpResponseNotFound` \u00e2\u2020\u2019 `HttpResponse` \u00e2\u2020\u2019 `HttpResponseBase` \u00e2\u2020\u2019 `object`\n\n(`HttpResponseBase` is a plain new-style class, not itself derived from anything but `object`.)\n\n**True siblings** (direct subclasses of `HttpResponse`, in `django/http/response.py`):\n\n- `HttpResponseNotModified` (304)\n- `HttpResponseBadRequest` (400)\n- `HttpResponseForbidden` (403)\n- `HttpResponseNotAllowed` (405)\n- `HttpResponseGone` (410)\n- `HttpResponseServerError` (500)\n\n**Things that look like siblings but aren't:**\n\n- `HttpResponseRedirect` (302) and `HttpResponsePermanentRedirect` (301) \u00e2\u20ac\u201d these don't subclass `HttpResponse` directly. They go through an intermediate `HttpResponseRedirectBase(HttpResponse)`, so they're cousins one level removed, not direct siblings.\n- `Http404` \u00e2\u20ac\u201d despite the name pattern matching (`HttpResponseNotFound` = 404), this is a plain `Exception` subclass, unrelated to the `HttpResponseBase` hierarchy entirely. It's raised in views to *trigger* a 404, not a response class.\n- `StreamingHttpResponse` and `FileResponse` subclass `HttpResponseBase` directly, bypassing `HttpResponse` \u00e2\u20ac\u201d so they share the base but skip the `HttpResponse` link that `HttpResponseNotFound` goes through.",
+      "ttft_ms": 1622,
+      "type": "result",
+      "duration_ms": 21181,
+      "uuid": "082e0311-c27e-41f8-aeb9-aab7c0933a39",
+      "ttft_stream_ms": 1015,
+      "time_to_request_ms": 78,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "What does the Manager class in django.db.models.manager inherit from, and why might that be hard to determine automatically just from reading the code structure?",
+    "baseline": {
+      "duration_api_ms": 14930,
+      "stop_reason": "end_turn",
+      "session_id": "0ccf99c8-939b-4ce4-a638-5faa51dcdb0c",
+      "total_cost_usd": 0.09743,
+      "usage": {
+        "input_tokens": 8,
+        "cache_creation_input_tokens": 13379,
+        "cache_read_input_tokens": 168495,
+        "output_tokens": 919,
+        "output_tokens_details": {
+          "thinking_tokens": 27
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13379,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 625,
+            "cache_read_input_tokens": 44885,
+            "cache_creation_input_tokens": 2829,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2829
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 924,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.001009,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 8,
+          "outputTokens": 919,
+          "cacheReadInputTokens": 168495,
+          "cacheCreationInputTokens": 13379,
+          "webSearchRequests": 0,
+          "costUSD": 0.096421,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 4,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`Manager` inherits from a class that doesn't exist anywhere as a static definition:\n\n```python\nclass Manager(BaseManager.from_queryset(QuerySet)):\n    pass\n```\n\n`BaseManager.from_queryset(QuerySet)` (manager.py:107-118) is called at import time and dynamically builds a new class on the fly via `type(class_name, (cls,), {...})`. So `Manager`'s actual base class is a synthetic subclass of `BaseManager` \u00e2\u20ac\u201d internally named `\"BaseManagerFromQuerySet\"` \u00e2\u20ac\u201d that only exists because that `type()` call constructed it once, at module load, and bound it into `Manager`'s MRO.\n\nWhy this defeats static reading:\n- There's no `class BaseManagerFromQuerySet(BaseManager): ...` block anywhere to grep for or click through to \u00e2\u20ac\u201d the class object is manufactured entirely at runtime.\n- Its contents aren't fixed either: `_get_queryset_methods` (manager.py:82-105) uses `inspect.getmembers` to walk every public method on `QuerySet` and copy each onto the new class as a wrapped proxy method (`create_method`, lines 84-89). So the base class's method set depends on whatever `QuerySet` happens to define at call time, not on anything written in `manager.py`.\n- The same `from_queryset()` machinery is how custom managers are built too (e.g. `Manager.from_queryset(SomeQuerySet)`), so `Manager` isn't a special case \u00e2\u20ac\u201d it's just the built-in instance of a general pattern for turning a QuerySet's method list into a manager's base class.\n\nSo a static analyzer (or a human skimming the file) sees `class Manager(BaseManager.from_queryset(QuerySet))` and can't resolve the base class without actually executing `from_queryset`, since it's a metaclass-free but still fully dynamic `type()` call rather than a subclass statement.",
+      "ttft_ms": 2372,
+      "type": "result",
+      "duration_ms": 14785,
+      "uuid": "942deb87-cc00-4fe7-a0c9-ac85a702be89",
+      "ttft_stream_ms": 1745,
+      "time_to_request_ms": 280,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 14622,
+      "stop_reason": "end_turn",
+      "session_id": "2bf52548-51c6-4188-b128-23009e9c97ea",
+      "total_cost_usd": 0.0978014,
+      "usage": {
+        "input_tokens": 8,
+        "cache_creation_input_tokens": 13571,
+        "cache_read_input_tokens": 169162,
+        "output_tokens": 868,
+        "output_tokens_details": {
+          "thinking_tokens": 22
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13571,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 639,
+            "cache_read_input_tokens": 45077,
+            "cache_creation_input_tokens": 2829,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2829
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 924,
+          "outputTokens": 13,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000989,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 8,
+          "outputTokens": 868,
+          "cacheReadInputTokens": 169162,
+          "cacheCreationInputTokens": 13571,
+          "webSearchRequests": 0,
+          "costUSD": 0.09681239999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 4,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`Manager` is defined at line 176 as:\n\n```python\nclass Manager(BaseManager.from_queryset(QuerySet)):\n    pass\n```\n\nSo `Manager` inherits from whatever class `BaseManager.from_queryset(QuerySet)` returns \u00e2\u20ac\u201d not from `BaseManager` directly, and not from any literally-named class in the file.\n\nThat's exactly why it's hard to determine from static reading:\n\n- `from_queryset` (line 107-118) is a classmethod that calls `type(class_name, (cls,), {...})` \u00e2\u20ac\u201d it dynamically constructs a brand-new class at runtime using Python's `type()` constructor, rather than a `class` statement. The generated class name is `\"BaseManagerFromQuerySet\"` (built from `cls.__name__` + `queryset_class.__name__`), and its bases tuple is `(cls,)`, i.e., `(BaseManager,)`.\n- That dynamically-created class also gets a pile of methods copied onto it (`_get_queryset_methods`) by introspecting `QuerySet`'s public methods with `inspect.getmembers` and wrapping each one in a generated `manager_method` closure \u00e2\u20ac\u201d none of these appear as textual method definitions anywhere.\n\nSo the actual inheritance chain is `Manager` \u00e2\u2020\u2019 (dynamically generated `BaseManagerFromQuerySet` class) \u00e2\u2020\u2019 `BaseManager`, and it effectively also exposes all of `QuerySet`'s public API as instance methods. A static reader or a naive AST-based tool that only looks at `class X(Y):` statements would see `Manager`'s base as the *expression* `BaseManager.from_queryset(QuerySet)` rather than a class name, and would have no way to know \u00e2\u20ac\u201d without actually executing that code \u00e2\u20ac\u201d that it resolves to a synthetic subclass of `BaseManager` carrying copies of every public `QuerySet` method. This is a classic case of metaprogramming (runtime class synthesis via `type()`) defeating purely static analysis.",
+      "ttft_ms": 2174,
+      "type": "result",
+      "duration_ms": 14289,
+      "uuid": "c6796fbe-77e8-4c9f-ad96-e05c802aced7",
+      "ttft_stream_ms": 1403,
+      "time_to_request_ms": 79,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "How many different classes define a save() method across this codebase, and are they related to each other through inheritance?",
+    "baseline": {
+      "duration_api_ms": 105207,
+      "stop_reason": "end_turn",
+      "session_id": "a9da6356-1dc8-4c3c-8486-cf5650302b8b",
+      "total_cost_usd": 0.2950992,
+      "usage": {
+        "input_tokens": 14,
+        "cache_creation_input_tokens": 28734,
+        "cache_read_input_tokens": 327966,
+        "output_tokens": 11355,
+        "output_tokens_details": {
+          "thinking_tokens": 6670
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 28734,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2686,
+            "cache_read_input_tokens": 58369,
+            "cache_creation_input_tokens": 4700,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 4700
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 917,
+          "outputTokens": 15,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000992,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 14,
+          "outputTokens": 11355,
+          "cacheReadInputTokens": 327966,
+          "cacheCreationInputTokens": 28734,
+          "webSearchRequests": 0,
+          "costUSD": 0.2941072,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 26,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Searching the core `django/` package (not tests) for methods literally named `save`, **21 distinct classes** define their own `save()`:\n\n| # | Class | File |\n|---|---|---|\n| 1 | `Model` | `db/models/base.py` |\n| 2 | `AbstractBaseUser` | `contrib/auth/base_user.py` |\n| 3 | `AnonymousUser` | `contrib/auth/models.py` |\n| 4 | `BaseModelForm` | `forms/models.py` |\n| 5 | `BaseUserCreationForm` | `contrib/auth/forms.py` |\n| 6 | `BaseModelFormSet` | `forms/models.py` |\n| 7 | `PasswordResetForm` | `contrib/auth/forms.py` |\n| 8 | `SetPasswordForm` | `contrib/auth/forms.py` |\n| 9 | `AdminPasswordChangeForm` | `contrib/auth/forms.py` |\n| 10 | `FieldFile` | `db/models/fields/files.py` |\n| 11 | `DeserializedObject` | `core/serializers/base.py` |\n| 12 | `Storage` | `core/files/storage/base.py` |\n| 13 | `RequestSite` | `contrib/sites/requests.py` |\n| 14 | `BaseSessionManager` | `contrib/sessions/base_session.py` |\n| 15 | `SessionBase` | `contrib/sessions/backends/base.py` |\n| 16\u00e2\u20ac\u201c20 | `SessionStore` (\u00c3\u20145, one per backend) | `contrib/sessions/backends/{db,file,cache,cached_db,signed_cookies}.py` |\n| 21 | `LayerMapping` | `contrib/gis/utils/layermapping.py` |\n\n## Inheritance relationships\n\nA few genuine clusters, the rest independent:\n\n- **ORM core**: `AbstractBaseUser.save()` calls `super().save()`, overriding `Model.save()` \u00e2\u20ac\u201d the only override of the core ORM save in the main library.\n- **Session backends**: all 5 `SessionStore.save()` implementations trace back to abstract `SessionBase.save()` (which just raises `NotImplementedError`). Four (`db`, `file`, `cache`, `signed_cookies`) subclass `SessionBase` directly; `cached_db.SessionStore` subclasses `db.SessionStore` (aliased `DBStore`) and calls its `super().save()`, so it's a grandchild of `SessionBase`.\n- **Model forms**: `BaseUserCreationForm.save()` overrides `BaseModelForm.save()` (via `ModelForm`), calling `super().save()` then setting the password. `UserCreationForm`/`AdminUserCreationForm` inherit it unchanged. `PasswordChangeForm` also inherits `SetPasswordForm.save()` without redefining it.\n\nEverything else is unrelated by inheritance, despite some looking similar by *duck typing* rather than subclassing:\n- `RequestSite.save()` and `AnonymousUser.save()` mimic the interface of `Site`/`User` models but don't inherit from `Model`.\n- `PasswordResetForm`, `SetPasswordForm`, `AdminPasswordChangeForm` are plain `forms.Form` subclasses, not `ModelForm`, so they don't share `BaseModelForm.save()`.\n- `Storage.save()`, `FieldFile.save()`, `DeserializedObject.save()`, `BaseSessionManager.save()`, `BaseModelFormSet.save()`, and `LayerMapping.save()` are each the sole definition in their own class hierarchy \u00e2\u20ac\u201d no subclass overrides them.",
+      "ttft_ms": 5210,
+      "type": "result",
+      "duration_ms": 106927,
+      "uuid": "ada81718-eedf-46e6-b8c0-bf7293b8fbb6",
+      "ttft_stream_ms": 1849,
+      "time_to_request_ms": 259,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 87866,
+      "stop_reason": "end_turn",
+      "session_id": "bbcf35e6-43f6-49f0-91db-45128c13b7b1",
+      "total_cost_usd": 0.38805380000000006,
+      "usage": {
+        "input_tokens": 32,
+        "cache_creation_input_tokens": 31356,
+        "cache_read_input_tokens": 867994,
+        "output_tokens": 8799,
+        "output_tokens_details": {
+          "thinking_tokens": 5634
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 31356,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1190,
+            "cache_read_input_tokens": 63370,
+            "cache_creation_input_tokens": 2321,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2321
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 917,
+          "outputTokens": 12,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000977,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 32,
+          "outputTokens": 8799,
+          "cacheReadInputTokens": 867994,
+          "cacheCreationInputTokens": 31356,
+          "webSearchRequests": 0,
+          "costUSD": 0.3870768000000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 16,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Confirmed. Now I have the full picture \u00e2\u20ac\u201d 21 distinct classes define a `save()` method in Django's codebase, falling into a few loosely-connected inheritance clusters plus several unrelated standalone classes.\n\n## Summary\n\n**21 classes** define a `save()` method. They fall into a handful of small inheritance clusters \u00e2\u20ac\u201d there's no single shared base across the whole set.\n\n**1. ORM `Model.save()` chain** (`db/models/base.py`, `contrib/auth/base_user.py`)\n- `Model.save()` \u00e2\u20ac\u201d the core implementation (INSERT/UPDATE)\n- `AbstractBaseUser.save()` \u00e2\u20ac\u201d subclasses `models.Model`, overrides `save()` to trigger `password_changed()` when the password changed, then calls `super().save()`\n\n**2. Sessions `SessionStore` chain** (all in `contrib/sessions/backends/`) \u00e2\u20ac\u201d the biggest related group\n- `SessionBase.save()` (`base.py`) \u00e2\u20ac\u201d abstract, raises `NotImplementedError`\n- `SessionStore.save()` in `db.py`, `file.py`, `cache.py`, `signed_cookies.py` \u00e2\u20ac\u201d each subclasses `SessionBase` directly and overrides `save()`\n- `SessionStore.save()` in `cached_db.py` \u00e2\u20ac\u201d subclasses `db.py`'s `SessionStore` (not `SessionBase` directly), so the chain is `SessionBase \u00e2\u2020\u2019 db.SessionStore \u00e2\u2020\u2019 cached_db.SessionStore`, overriding `save()` twice\n\nThat's 6 classes, all connected through inheritance from `SessionBase`.\n\n**3. Forms**\n- `BaseModelForm.save()` and `BaseModelFormSet.save()` (`forms/models.py`) \u00e2\u20ac\u201d independent of each other (form vs. formset)\n- `BaseUserCreationForm.save()` (`contrib/auth/forms.py`) \u00e2\u20ac\u201d inherits `forms.ModelForm` \u00e2\u2020\u2019 `BaseModelForm`, so it's related to #1 via `super().save()`\n- `PasswordResetForm.save()`, `SetPasswordForm.save()`, `AdminPasswordChangeForm.save()` (`contrib/auth/forms.py`) \u00e2\u20ac\u201d each subclasses plain `forms.Form`, which has no `save()`, so these three are unrelated to each other or to `BaseModelForm` by inheritance; each just happens to reuse the name\n\n**4. Unrelated standalone classes** (same method name, no shared base with any of the above)\n- `FieldFile.save()` (`db/models/fields/files.py`)\n- `Storage.save()` (`core/files/storage/base.py`) \u00e2\u20ac\u201d the only one; subclasses are meant to override `_save()`, not `save()`\n- `DeserializedObject.save()` (`core/serializers/base.py`)\n- `RequestSite.save()` (`contrib/sites/requests.py`) \u00e2\u20ac\u201d mimics the `Site` model's interface but doesn't inherit it; raises `NotImplementedError`\n- `BaseSessionManager.save()` (`contrib/sessions/base_session.py`) \u00e2\u20ac\u201d a manager helper with a different signature (`session_key, session_dict, expire_date`), not an instance save\n- `AnonymousUser.save()` (`contrib/auth/models.py`) \u00e2\u20ac\u201d mimics `User`'s interface but doesn't inherit `AbstractBaseUser`; raises `NotImplementedError`\n- `LayerMapping.save()` (`contrib/gis/utils/layermapping.py`)\n\nSo: two real inheritance families (ORM models, sessions backends), one partial link through `ModelForm`, and the rest are independent classes that just reuse the conventional `save()` name.",
+      "ttft_ms": 2294,
+      "type": "result",
+      "duration_ms": 88816,
+      "uuid": "3b6d0882-1e9a-4f76-bb44-0609c0e2925a",
+      "ttft_stream_ms": 1066,
+      "time_to_request_ms": 80,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "How many different places define a clean() method, and what do they have in common?",
+    "baseline": {
+      "duration_api_ms": 16388,
+      "stop_reason": "end_turn",
+      "session_id": "620492cd-98e9-4702-8a20-f591593d6d1b",
+      "total_cost_usd": 0.09825260000000001,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 14984,
+        "cache_read_input_tokens": 123648,
+        "output_tokens": 1261,
+        "output_tokens_details": {
+          "thinking_tokens": 121
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 14984,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 932,
+            "cache_read_input_tokens": 44841,
+            "cache_creation_input_tokens": 4478,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 4478
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 910,
+          "outputTokens": 11,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000965,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 6,
+          "outputTokens": 1261,
+          "cacheReadInputTokens": 123648,
+          "cacheCreationInputTokens": 14984,
+          "webSearchRequests": 0,
+          "costUSD": 0.0972876,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 3,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "## `def clean(` definitions in Django\n\nThere are **28 definitions across 13 files**, falling into a few clear families:\n\n| Family | Signature | Files | Role |\n|---|---|---|---|\n| **Field.clean** | `clean(self, value)` | `forms/fields.py` (7), `forms/models.py` (2), `contrib/postgres/forms/array.py` (2), `contrib/gis/forms/fields.py` (1) | Runs a single value through `to_python()` \u00e2\u2020\u2019 `validate()` \u00e2\u2020\u2019 `run_validators()` and returns the cleaned Python value. |\n| **Form.clean** | `clean(self)` | `forms/forms.py`, `forms/models.py` (\u00c3\u20142, model forms), `contrib/auth/forms.py` (\u00c3\u20143), `contrib/flatpages/forms.py` | Cross-field validation *after* every field's own `clean()` has run; operates on `self.cleaned_data` and returns it (often via `super().clean()`). |\n| **BaseFormSet.clean** | `clean(self)` | `forms/formsets.py` (\u00c3\u20142) | Same idea, but at the formset level \u00e2\u20ac\u201d cross-form validation after each form has cleaned itself. |\n| **Model.clean** | `clean(self)` | `db/models/base.py`, `contrib/auth/models.py` | Model-wide validation hook, called by `full_clean()` after `clean_fields()`; used to normalize/validate across multiple model fields. |\n| **model field clean** | `clean(self, value, model_instance)` | `db/models/fields/__init__.py` | The model-field equivalent of a form field's `clean` \u00e2\u20ac\u201d converts type and validates a single field's value. |\n| **Comparator.clean** | `clean(self, x)` | `core/validators.py` (\u00c3\u20143, in `MaxLengthValidator`/`MinLengthValidator`/base comparator classes) | Small helper that reduces a value to the thing actually being compared (e.g. `len(x)`) before running the comparison. |\n| **user model helper** | `clean(self)` | `contrib/auth/base_user.py` | Normalizes the username field on the abstract base user. |\n\n**What they all have in common:**\n- They're all part of Django's validation pipeline, and every one of them is a **hook meant to be overridden by subclasses**.\n- The pattern is consistent everywhere: take raw/partially-processed input, **normalize/convert it, validate it, and either return the cleaned value or raise `ValidationError`**.\n- Nearly all of them call `super().clean(...)` first (or last) to chain up the MRO rather than replace parent behavior \u00e2\u20ac\u201d the field/form/model variants especially rely on this cooperative chaining.\n- They operate at different granularities but follow the same field \u00e2\u2020\u2019 form/formset \u00e2\u2020\u2019 model escalation: field-level `clean` validates one value, form/model-level `clean` validates relationships between already-cleaned values.",
+      "ttft_ms": 2787,
+      "type": "result",
+      "duration_ms": 16535,
+      "uuid": "8e47b640-4395-4cc9-8acb-0af950396e11",
+      "ttft_stream_ms": 1197,
+      "time_to_request_ms": 253,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 33064,
+      "stop_reason": "end_turn",
+      "session_id": "4c4314b8-ad09-45ae-8be7-c5d903f5158c",
+      "total_cost_usd": 0.1518638,
+      "usage": {
+        "input_tokens": 14,
+        "cache_creation_input_tokens": 16264,
+        "cache_read_input_tokens": 315249,
+        "output_tokens": 2276,
+        "output_tokens_details": {
+          "thinking_tokens": 543
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 16264,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1042,
+            "cache_read_input_tokens": 50127,
+            "cache_creation_input_tokens": 472,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 472
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 910,
+          "outputTokens": 12,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.00097,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 14,
+          "outputTokens": 2276,
+          "cacheReadInputTokens": 315249,
+          "cacheCreationInputTokens": 16264,
+          "webSearchRequests": 0,
+          "costUSD": 0.1508938,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 7,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "I have enough to answer directly.\n\n## Count\n\nThere are **27 definitions** of a `clean()` (or `clean(self, value...)`) method across Django's core source tree (excluding tests):\n\n| Category | Locations | Signature |\n|---|---|---|\n| Form-wide cleaning | `forms/forms.py:368`, `forms/models.py:441,822`, `forms/formsets.py:43,464`, `contrib/flatpages/forms.py:57`, `contrib/auth/forms.py:236,344,505,575` | `clean(self)` |\n| Field-level cleaning | `forms/fields.py:203,681,941,1018,1043,1099`, `forms/models.py:1399,1637`, `contrib/gis/forms/fields.py:75`, `contrib/postgres/forms/array.py:32,211` | `clean(self, value)` |\n| Model-level validation | `db/models/base.py:1459`, `contrib/auth/base_user.py:71`, `contrib/auth/models.py:502` | `clean(self)` |\n| Model field cleaning | `db/models/fields/__init__.py:870` | `clean(self, value, model_instance)` |\n| Validator normalization | `core/validators.py:410,484,502` (`BaseValidator`, `MinLengthValidator`, `MaxLengthValidator`) | `clean(self, x)` |\n\n## What they have in common\n\nDespite different signatures, every one follows the same convention: **take a raw value/state, validate it, and either return a cleaned/normalized value or raise `ValidationError`.** Specifically:\n\n- **Forms** (`Form.clean`, `ModelForm.clean`, `BaseFormSet.clean`): called *after* all individual fields have already been cleaned, for cross-field/cross-form validation. They don't return a value (mutate `self.cleaned_data`), and any `ValidationError` raised gets attached to `NON_FIELD_ERRORS` (`__all__`).\n- **Form Fields** (`Field.clean`, and subclasses like `MultiValueField`, `FileField`): take one raw input value, run `to_python()` \u00e2\u2020\u2019 `validate()` \u00e2\u2020\u2019 `run_validators()`, and return the cleaned Python value. This is the \"unit\" version of the pattern.\n- **Model** (`Model.clean`) and **ModelField** (`db.models.fields.Field.clean`): the same idea applied to model instances \u00e2\u20ac\u201d a hook for custom validation invoked by `full_clean()`, raising `ValidationError` on bad data.\n- **Validators** (`BaseValidator.clean` and its subclasses): a small internal helper used before comparison (e.g., `MinLengthValidator.clean` returns `len(x)` so the length, not the raw value, gets compared to the limit).\n\nSo the unifying thread is Django's **validation pipeline convention**: `clean()` is always the method that normalizes/validates data and signals problems via `ValidationError`, whether it's operating on a single field's value, a whole form, a formset, or a model instance \u00e2\u20ac\u201d and higher-level `clean()` calls (form, formset, model) are always invoked *after* the lower-level field-by-field `clean()` calls have already run.",
+      "ttft_ms": 3064,
+      "type": "result",
+      "duration_ms": 33640,
+      "uuid": "9d31fb4d-7d7f-4c7b-8b5a-dfe8902d4347",
+      "ttft_stream_ms": 1728,
+      "time_to_request_ms": 80,
+      "queued_turn_count": 0
+    },
+    "old_graph_before_fix": {
+      "duration_api_ms": 24243,
+      "stop_reason": "end_turn",
+      "session_id": "7110f47d-874c-4e32-ac4a-0b2c5977886f",
+      "total_cost_usd": 0.139797,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 18971,
+        "cache_read_input_tokens": 227165,
+        "output_tokens": 1749,
+        "output_tokens_details": {
+          "thinking_tokens": 329
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 18971,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 925,
+            "cache_read_input_tokens": 52810,
+            "cache_creation_input_tokens": 496,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 496
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 910,
+          "outputTokens": 12,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.00097,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 10,
+          "outputTokens": 1749,
+          "cacheReadInputTokens": 227165,
+          "cacheCreationInputTokens": 18971,
+          "webSearchRequests": 0,
+          "costUSD": 0.138827,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 5,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "**28 definitions of `clean()` across 13 files** (this is Django's core repo, not the test suite). They fall into two families that share one common shape: **validate/normalize the current value, then return the cleaned result** (raising `ValidationError` if something's wrong) \u00e2\u20ac\u201d never mutating in place without returning.\n\n**1. Form/formset-wide `clean(self)`** (no args) \u00e2\u20ac\u201d `forms/forms.py`, `forms/formsets.py` (\u00c3\u20142), `forms/models.py` (\u00c3\u20143), `contrib/auth/forms.py` (\u00c3\u20144), `contrib/flatpages/forms.py`:\n- Hook called *after* all individual fields have already been cleaned via `full_clean()`.\n- Base implementation is a no-op (`pass` or `return self.cleaned_data`) meant to be overridden.\n- Subclasses call `super().clean()` first, then add cross-field checks (password confirmation, uniqueness, URL/site collisions) and return `self.cleaned_data`.\n\n**2. Field-level `clean(self, value, ...)`** \u00e2\u20ac\u201d `forms/fields.py` (\u00c3\u20146), `forms/models.py` (\u00c3\u20142), `db/models/fields/__init__.py`, `core/validators.py` (\u00c3\u20143), `contrib/postgres/forms/array.py` (\u00c3\u20142), `contrib/gis/forms/fields.py`:\n- Takes the raw input value and returns a converted/validated value.\n- Canonical pattern (from `forms/fields.py:203`): `to_python(value)` \u00e2\u2020\u2019 `validate(value)` \u00e2\u2020\u2019 `run_validators(value)` \u00e2\u2020\u2019 return.\n- Subclasses (ChoiceField, TypedChoiceField, MultiValueField, PostgreSQL ArrayField, GIS GeometryField, ModelChoiceField\u00e2\u20ac\u00a6) call `super().clean(value)` and layer extra coercion/validation on top.\n- `core/validators.py`'s `BaseValidator.clean()` is a smaller variant used just to normalize the value before comparison (e.g. `len(x)` for length validators).\n\n**3. Model-level `clean(self)`** \u00e2\u20ac\u201d `db/models/base.py`, `contrib/auth/models.py`, `contrib/auth/base_user.py`:\n- Same \"no-op hook meant to be overridden\" pattern as form-wide clean, but for `Model.full_clean()` \u00e2\u20ac\u201d runs after `clean_fields()`, errors go to `NON_FIELD_ERRORS`.\n- `AbstractUser.clean()` and `AbstractBaseUser.clean()` call `super().clean()` and normalize the email/username.\n\nThe common thread across all 28: they're all part of Django's uniform **\"clean\" validation protocol** \u00e2\u20ac\u201d call the parent's `clean()`/`to_python()` first when overriding, only ever raise `ValidationError` (not other exceptions) on invalid input, and always return the cleaned value rather than mutating state silently.",
+      "ttft_ms": 3200,
+      "type": "result",
+      "duration_ms": 25183,
+      "uuid": "1668cbce-8589-4f84-ae28-2be0c1516b60",
+      "ttft_stream_ms": 2596,
+      "time_to_request_ms": 80,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "What's the relationship between BaseManager, Manager, and QuerySet in django.db.models?",
+    "baseline": {
+      "duration_api_ms": 22294,
+      "stop_reason": "end_turn",
+      "session_id": "663bd2c1-eba8-4974-8b66-5bd655e24c2b",
+      "total_cost_usd": 0.10116739999999999,
+      "usage": {
+        "input_tokens": 8,
+        "cache_creation_input_tokens": 13568,
+        "cache_read_input_tokens": 168862,
+        "output_tokens": 1211,
+        "output_tokens_details": {
+          "thinking_tokens": 75
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13568,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 789,
+            "cache_read_input_tokens": 45074,
+            "cache_creation_input_tokens": 2829,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2829
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 912,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000997,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 8,
+          "outputTokens": 1211,
+          "cacheReadInputTokens": 168862,
+          "cacheCreationInputTokens": 13568,
+          "webSearchRequests": 0,
+          "costUSD": 0.10017039999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 5,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "Based on `django/db/models/manager.py`:\n\n**BaseManager** (line 10) is the foundation class. It handles the manager machinery that has nothing to do with query methods specifically:\n- Model attachment via `contribute_to_class` (attaches itself to a model class as `objects` etc., through a `ManagerDescriptor`)\n- `db_manager()` / `.db` for routing to a specific database\n- `deconstruct()` for migration serialization\n- The `_get_queryset_methods()` / `from_queryset()` classmethods that **copy public QuerySet methods onto the manager** as proxy methods (so `Model.objects.filter(...)` works without a manager author having to redefine `filter`)\n- `get_queryset()`, which is the one method meant to be overridden by subclasses to customize what queryset a manager returns\n\n**Manager** (line 176) is trivial:\n```python\nclass Manager(BaseManager.from_queryset(QuerySet)):\n    pass\n```\nIt's just `BaseManager` bound to the default `QuerySet` class via `from_queryset()`. This is what `Model.objects` is by default, and it's the class most custom managers subclass.\n\n**QuerySet** (`django/db/models/query.py`) is the actual query-building/execution object \u00e2\u20ac\u201d it holds the lazy, chainable query (`filter`, `exclude`, `order_by`, etc.) and evaluates against the database when iterated. A manager doesn't reimplement any of that; `get_queryset()` just instantiates one (`self._queryset_class(model=self.model, using=self._db, hints=self._hints)`), and every other public method on Manager is a thin proxy that does `self.get_queryset().<method>(...)`.\n\nSo the chain is: **BaseManager** = generic manager plumbing (model binding, db routing, method-proxying machinery) \u00e2\u2020\u2019 **Manager** = `BaseManager` wired to the default **QuerySet** class \u00e2\u2020\u2019 calling something like `Model.objects.filter(...)` really calls `Model.objects.get_queryset().filter(...)`, i.e. the manager is a factory/entry point that hands off to a `QuerySet` instance, which does the actual work. This is also why `MyQuerySet.as_manager()` and `Manager.from_queryset(MyQuerySet)` exist \u00e2\u20ac\u201d they're the two ways to get a manager whose proxy methods match a *custom* QuerySet subclass instead of the base one.",
+      "ttft_ms": 4049,
+      "type": "result",
+      "duration_ms": 22064,
+      "uuid": "fd3e4c16-0a46-4792-aa01-b71323f0d8eb",
+      "ttft_stream_ms": 2662,
+      "time_to_request_ms": 269,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 13531,
+      "stop_reason": "end_turn",
+      "session_id": "abe4195c-74a3-44cf-8827-a5670c87dabc",
+      "total_cost_usd": 0.09929659999999998,
+      "usage": {
+        "input_tokens": 8,
+        "cache_creation_input_tokens": 13755,
+        "cache_read_input_tokens": 169518,
+        "output_tokens": 936,
+        "output_tokens_details": {
+          "thinking_tokens": 126
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13755,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 537,
+            "cache_read_input_tokens": 45261,
+            "cache_creation_input_tokens": 2829,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2829
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 912,
+          "outputTokens": 17,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000997,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 8,
+          "outputTokens": 936,
+          "cacheReadInputTokens": 169518,
+          "cacheCreationInputTokens": 13755,
+          "webSearchRequests": 0,
+          "costUSD": 0.09829959999999999,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 4,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "The three form a layered proxy chain (`django/db/models/manager.py:10-213`):\n\n**`BaseManager`** \u00e2\u20ac\u201d the generic base. It doesn't know about `QuerySet` directly; instead it defines `from_queryset(queryset_class)` (line 107), a classmethod that dynamically builds a new manager subclass. That subclass gets a `_queryset_class` attribute and, via `_get_queryset_methods` (line 82), auto-generated wrapper methods for every public method on the given queryset class \u00e2\u20ac\u201d each wrapper just calls `self.get_queryset().<method>(...)`. `get_queryset()` itself (line 150) instantiates `self._queryset_class(model=..., using=..., hints=...)`.\n\n**`Manager`** (line 176) \u00e2\u20ac\u201d simply:\n```python\nclass Manager(BaseManager.from_queryset(QuerySet)):\n    pass\n```\nIt's `BaseManager` specialized to Django's own `QuerySet`. This is what `objects = models.Manager()` actually gives you.\n\n**`QuerySet`** \u00e2\u20ac\u201d the thing being wrapped. It's not a subclass of either manager class; it's composed in. The manager exists to (a) be the entry point attached to a model class (`objects`), and (b) proxy calls down into a fresh `QuerySet` instance, so `Model.objects.filter(...)` really means \"make a new queryset via `get_queryset()`, then call `.filter()` on it.\"\n\nThis design is why custom managers use `Manager.from_queryset(MyQuerySet)` \u00e2\u20ac\u201d it regenerates the proxy methods for a custom `QuerySet` subclass without hand-writing wrappers for each method.",
+      "ttft_ms": 2503,
+      "type": "result",
+      "duration_ms": 12971,
+      "uuid": "3647c05e-90d6-4a10-9c85-fadca913b827",
+      "ttft_stream_ms": 1110,
+      "time_to_request_ms": 84,
+      "queued_turn_count": 0
+    }
+  },
+  {
+    "question": "What does EmptyManager inherit from, and how does that compare to how the regular Manager class is defined?",
+    "baseline": {
+      "duration_api_ms": 10025,
+      "stop_reason": "end_turn",
+      "session_id": "ea757288-5000-4130-9255-8c454e357435",
+      "total_cost_usd": 0.07836380000000001,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 11355,
+        "cache_read_input_tokens": 123689,
+        "output_tokens": 722,
+        "output_tokens_details": {
+          "thinking_tokens": 30
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 11355,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 376,
+            "cache_read_input_tokens": 44873,
+            "cache_creation_input_tokens": 817,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 817
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 914,
+          "outputTokens": 12,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000974,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 6,
+          "outputTokens": 722,
+          "cacheReadInputTokens": 123689,
+          "cacheCreationInputTokens": 11355,
+          "webSearchRequests": 0,
+          "costUSD": 0.07738980000000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 4,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "`EmptyManager` (django/db/models/manager.py:207) directly subclasses `Manager` \u00e2\u20ac\u201d it's a plain Python subclass, not a dynamic construction.\n\n`Manager` itself (line 176) is defined as `class Manager(BaseManager.from_queryset(QuerySet)):` \u00e2\u20ac\u201d `BaseManager.from_queryset(QuerySet)` dynamically builds a manager class that copies all public methods from `QuerySet` onto a `BaseManager` subclass, and `Manager` just inherits that generated class (with `pass`, adding nothing new).\n\nSo the comparison:\n- `Manager` = `BaseManager` + all `QuerySet` methods, generated dynamically via `from_queryset`.\n- `EmptyManager` = plain subclass of `Manager` (so it inherits all those QuerySet-derived methods too), but it overrides `get_queryset()` to always return `super().get_queryset().none()` \u00e2\u20ac\u201d i.e., an empty queryset \u00e2\u20ac\u201d and requires a `model` argument in `__init__`. It's used internally (e.g., for abstract/swapped-out relations) where you need a manager-like object whose queryset is always empty.",
+      "ttft_ms": 1689,
+      "type": "result",
+      "duration_ms": 9958,
+      "uuid": "dfd54061-4f70-46ab-bd74-96b8c14f2469",
+      "ttft_stream_ms": 1126,
+      "time_to_request_ms": 250,
+      "queued_turn_count": 0
+    },
+    "graph": {
+      "duration_api_ms": 10754,
+      "stop_reason": "end_turn",
+      "session_id": "d858d496-f0a0-45c1-b168-5cad83630a91",
+      "total_cost_usd": 0.085934,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 13456,
+        "cache_read_input_tokens": 124070,
+        "output_tokens": 630,
+        "output_tokens_details": {
+          "thinking_tokens": 19
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13456,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 436,
+            "cache_read_input_tokens": 44962,
+            "cache_creation_input_tokens": 2829,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2829
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 914,
+          "outputTokens": 14,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.000984,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-sonnet-5": {
+          "inputTokens": 6,
+          "outputTokens": 630,
+          "cacheReadInputTokens": 124070,
+          "cacheCreationInputTokens": 13456,
+          "webSearchRequests": 0,
+          "costUSD": 0.08495,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "canonicalModel": "claude-sonnet-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "fast_mode_disabled_reason": "preference",
+      "subagent_stats": {
+        "spawned": 0,
+        "requested": {
+          "background": 0,
+          "foreground": 0,
+          "unset": 0
+        },
+        "started_in_background": 0,
+        "max_depth": 0,
+        "spawned_by_subagents": 0,
+        "completed": 0,
+        "failed": 0,
+        "killed": {
+          "parent": 0,
+          "user": 0,
+          "system": 0
+        },
+        "refused": {
+          "depth_limit": 0,
+          "concurrency_limit": 0,
+          "budget": 0
+        },
+        "by_type": {}
+      },
+      "is_error": false,
+      "num_turns": 3,
+      "subtype": "success",
+      "api_error_status": null,
+      "result": "In `django/db/models/manager.py`:\n\n- **`Manager`** (line 176) is defined as `BaseManager.from_queryset(QuerySet)` \u00e2\u20ac\u201d it's not a hand-written subclass but a dynamically generated class. `from_queryset()` creates a new type inheriting from `BaseManager` and copies all public `QuerySet` methods onto it as proxy methods, so `Manager` behaves like `BaseManager` plus every `QuerySet` method (filter, exclude, get, etc.).\n\n- **`EmptyManager`** (line 207) inherits directly from `Manager` (not `BaseManager`), so it gets all those same proxied `QuerySet` methods for free. It only overrides two things:\n  - `__init__(self, model)` \u00e2\u20ac\u201d takes the model directly instead of being attached via `contribute_to_class`.\n  - `get_queryset()` \u00e2\u20ac\u201d calls `super().get_queryset().none()`, so it always returns an empty queryset.\n\nSo the comparison: `Manager` is `BaseManager` dynamically extended with `QuerySet`'s methods, while `EmptyManager` is a plain subclass of that already-built `Manager`, whose only customization is forcing `get_queryset()` to return `.none()` \u00e2\u20ac\u201d used internally (e.g., for abstract/swapped models) where you need a manager-like object with no actual data access.",
+      "ttft_ms": 2243,
+      "type": "result",
+      "duration_ms": 10323,
+      "uuid": "42a27db4-4068-4760-96b1-c138c38b3eea",
+      "ttft_stream_ms": 1488,
+      "time_to_request_ms": 86,
+      "queued_turn_count": 0
+    }
+  }
+]

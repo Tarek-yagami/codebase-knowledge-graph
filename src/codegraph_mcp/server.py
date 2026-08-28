@@ -97,16 +97,37 @@ def get_relationships(node_id: str) -> dict:
 
 @mcp.tool()
 def search_nodes(query: str) -> list[dict]:
-    """Search for nodes by a substring of their name or docstring (case-insensitive).
-    Use this when you don't know the exact node id to start from.
+    """Search for nodes by name or docstring (case-insensitive), for when you
+    don't know the exact name to look for and are exploring by concept or
+    keyword instead. Results are ranked: an exact name match comes first,
+    then a partial name match, then a docstring-only mention - each result
+    says which one it was, so a node that just happens to mention the word
+    in passing doesn't get confused with one actually named that. If you
+    already know the exact name, use find_by_name instead, it's precise
+    where this is deliberately fuzzy.
     """
     q = query.lower()
-    matches = [
-        _node_summary(n)
-        for n, d in _graph.nodes(data=True)
-        if q in d["name"].lower() or q in d.get("docstring", "").lower()
-    ]
-    return matches[:25]
+    tiers: list[list[dict]] = [[], [], []]
+    for n, d in _graph.nodes(data=True):
+        name = d["name"].lower()
+        if name == q:
+            tiers[0].append({**_node_summary(n), "matched_on": "exact name"})
+        elif q in name:
+            tiers[1].append({**_node_summary(n), "matched_on": "partial name"})
+        elif q in d.get("docstring", "").lower():
+            tiers[2].append({**_node_summary(n), "matched_on": "docstring"})
+    return (tiers[0] + tiers[1] + tiers[2])[:25]
+
+
+@mcp.tool()
+def find_by_name(name: str) -> list[dict]:
+    """Find every node whose name is exactly this (case-insensitive) - e.g.
+    every method called `save` across every class, no matter how many there
+    are. Use this once you know the precise name you're looking for; use
+    search_nodes instead when you're exploring by concept and don't.
+    """
+    q = name.lower()
+    return [_node_summary(n) for n, d in _graph.nodes(data=True) if d["name"].lower() == q]
 
 
 if __name__ == "__main__":
