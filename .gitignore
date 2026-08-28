@@ -4,14 +4,8 @@ __pycache__/
 venv/
 .env
 
-# external data source cloned by the pipeline, not vendored
-data/langchain-docs-mirror/
-
-# generated artifacts
-data/snapshots/
-data/index/
-*.db
-*.sqlite3
+# repos cloned locally as demo/analysis targets, not vendored
+data/repos/
 
 .ipynb_checkpoints/
 .DS_Store
