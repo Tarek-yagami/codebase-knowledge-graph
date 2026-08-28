@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# external data source cloned by the pipeline, not vendored
+data/langchain-docs-mirror/
+
+# generated artifacts
+data/snapshots/
+data/index/
+*.db
+*.sqlite3
+
+.ipynb_checkpoints/
+.DS_Store
