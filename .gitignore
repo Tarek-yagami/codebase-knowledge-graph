@@ -12,3 +12,6 @@ data/*.html
 
 .ipynb_checkpoints/
 .DS_Store
+
+# machine-specific absolute paths, see .mcp.json.example
+.mcp.json

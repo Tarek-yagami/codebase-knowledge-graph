@@ -64,6 +64,14 @@ def _resolve_import(raw: "_RawImport") -> str | None:
     return ".".join(parts) if parts else None
 
 
+def _is_overload(node) -> bool:
+    for dec in node.decorator_list:
+        name = dec.attr if isinstance(dec, ast.Attribute) else getattr(dec, "id", None)
+        if name == "overload":
+            return True
+    return False
+
+
 def _module_id(file: Path, root: Path) -> str:
     rel = file.relative_to(root).with_suffix("")
     return str(rel).replace("\\", "/").replace("/", ".")
@@ -80,6 +88,10 @@ class _FileVisitor(ast.NodeVisitor):
         self.nodes: dict[str, Node] = {}
         self.edges: list[Edge] = []
         self._scope_stack: list[str] = [module_id]
+        # Tracks only the nearest enclosing class, independent of _scope_stack,
+        # so a closure nested inside a method still resolves `self.x()` against
+        # the method's class rather than needing its own class scope.
+        self._class_stack: list[str] = []
 
     def _snippet(self, node: ast.AST) -> str:
         start = node.lineno - 1
@@ -120,7 +132,9 @@ class _FileVisitor(ast.NodeVisitor):
             if base_name:
                 self.edges.append(Edge(node_id, base_name, "inherits"))
         self._scope_stack.append(node_id)
+        self._class_stack.append(node_id)
         self.generic_visit(node)
+        self._class_stack.pop()
         self._scope_stack.pop()
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
@@ -130,6 +144,12 @@ class _FileVisitor(ast.NodeVisitor):
         self._visit_function(node)
 
     def _visit_function(self, node) -> None:
+        if _is_overload(node):
+            # Typing overload stubs share a name with the real implementation
+            # and aren't real, separate functions - skip them entirely rather
+            # than recording three "definitions" of the same method.
+            return
+
         parent = self._scope_stack[-1]
         node_id = f"{parent}.{node.name}"
         self.nodes[node_id] = Node(
@@ -144,8 +164,13 @@ class _FileVisitor(ast.NodeVisitor):
         )
         self.edges.append(Edge(parent, node_id, "defines"))
         self._scope_stack.append(node_id)
-        for call_name in self._calls_in(node):
-            self.edges.append(Edge(node_id, call_name, "calls"))
+        self_calls, bare_calls = self._calls_in(node)
+        enclosing_class = self._class_stack[-1] if self._class_stack else None
+        for name in self_calls:
+            if enclosing_class:
+                self.edges.append(Edge(node_id, f"self:{enclosing_class}:{name}", "calls"))
+        for name in bare_calls:
+            self.edges.append(Edge(node_id, name, "calls"))
         self._scope_stack.pop()
         # Don't generic_visit into the function body for nested defs handling
         # separately would double-count; instead visit only nested def/class.
@@ -153,16 +178,28 @@ class _FileVisitor(ast.NodeVisitor):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 self.visit(child)
 
-    def _calls_in(self, func_node) -> set[str]:
-        names: set[str] = set()
+    def _calls_in(self, func_node) -> tuple[set[str], set[str]]:
+        """Splits calls into ones we can actually resolve with confidence:
+        `self.x()` calls (resolvable against the enclosing class and its
+        bases) and bare `x()` calls (resolvable only if the name is
+        unambiguous codebase-wide). Calls on any other receiver - a local
+        variable, a dict, an unrelated object - are deliberately left
+        untracked rather than guessed at via a global same-name registry.
+        """
+        self_calls: set[str] = set()
+        bare_calls: set[str] = set()
         for n in ast.walk(func_node):
             if isinstance(n, ast.Call):
                 callee = n.func
                 if isinstance(callee, ast.Name):
-                    names.add(callee.id)
-                elif isinstance(callee, ast.Attribute):
-                    names.add(callee.attr)
-        return names
+                    bare_calls.add(callee.id)
+                elif (
+                    isinstance(callee, ast.Attribute)
+                    and isinstance(callee.value, ast.Name)
+                    and callee.value.id == "self"
+                ):
+                    self_calls.add(callee.attr)
+        return self_calls, bare_calls
 
 
 def parse_file(file: Path, root: Path) -> _FileVisitor:
@@ -183,6 +220,24 @@ def parse_file(file: Path, root: Path) -> _FileVisitor:
     return visitor
 
 
+def _resolve_self_call(class_id: str, method: str, nodes: dict[str, Node], bases_of: dict[str, list[str]]) -> str | None:
+    """Looks for `method` on class_id itself, then breadth-first up its base
+    classes - covers the common inherited-but-not-overridden case.
+    """
+    seen: set[str] = set()
+    queue = [class_id]
+    while queue:
+        cid = queue.pop(0)
+        if cid in seen:
+            continue
+        seen.add(cid)
+        candidate = f"{cid}.{method}"
+        if candidate in nodes:
+            return candidate
+        queue.extend(bases_of.get(cid, []))
+    return None
+
+
 def parse_repo(root: Path, exclude: tuple[str, ...] = ("test", "tests", "build", "docs")) -> ParseResult:
     result = ParseResult()
     py_files = [
@@ -190,7 +245,7 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = ("test", "tests", "build",
         for f in root.rglob("*.py")
         if not any(part in exclude for part in f.relative_to(root).parts)
     ]
-    all_defined_names: dict[str, str] = {}  # short name -> node id, for call resolution
+    all_defined_names: dict[str, list[str]] = {}  # short name -> every node id with that name
 
     visitors = []
     for f in py_files:
@@ -201,20 +256,50 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = ("test", "tests", "build",
         visitors.append(v)
         for node_id, node in v.nodes.items():
             result.nodes[node_id] = node
-            all_defined_names.setdefault(node.name, node_id)
+            all_defined_names.setdefault(node.name, []).append(node_id)
 
     module_ids = {n.id for n in result.nodes.values() if n.kind == "module"}
 
+    # Stage 1: inherits, unchanged best-effort global resolution - rarer to
+    # collide than calls, and not something the observed gaps were about.
+    bases_of: dict[str, list[str]] = {}
     for v in visitors:
         for edge in v.edges:
-            if edge.kind in ("calls", "inherits") and edge.dst not in result.nodes:
-                resolved = all_defined_names.get(edge.dst)
-                if resolved:
-                    result.edges.append(Edge(edge.src, resolved, edge.kind))
-                else:
-                    result.unresolved_calls.append((edge.src, edge.dst))
+            if edge.kind != "inherits":
                 continue
-            result.edges.append(edge)
+            resolved = edge.dst if edge.dst in result.nodes else None
+            if resolved is None:
+                candidates = all_defined_names.get(edge.dst)
+                resolved = candidates[0] if candidates else None
+            if resolved:
+                result.edges.append(Edge(edge.src, resolved, "inherits"))
+                bases_of.setdefault(edge.src, []).append(resolved)
+            else:
+                result.unresolved_calls.append((edge.src, edge.dst))
+
+    # Stage 2: calls - resolved conservatively. `self.x()` walks the enclosing
+    # class and its bases; a bare `x()` resolves only if unambiguous
+    # codebase-wide. Everything else was never recorded as a call at all
+    # (see _FileVisitor._calls_in).
+    for v in visitors:
+        for edge in v.edges:
+            if edge.kind != "calls":
+                continue
+            if edge.dst.startswith("self:"):
+                _, class_id, method = edge.dst.split(":", 2)
+                resolved = _resolve_self_call(class_id, method, result.nodes, bases_of)
+            else:
+                candidates = all_defined_names.get(edge.dst)
+                resolved = candidates[0] if candidates and len(candidates) == 1 else None
+            if resolved:
+                result.edges.append(Edge(edge.src, resolved, "calls"))
+            else:
+                result.unresolved_calls.append((edge.src, edge.dst))
+
+    for v in visitors:
+        for edge in v.edges:
+            if edge.kind == "defines":
+                result.edges.append(edge)
 
         seen: set[str] = set()
         for raw in v.raw_imports:
