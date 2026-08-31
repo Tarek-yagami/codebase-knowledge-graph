@@ -145,12 +145,10 @@ function endpointId(x) {
 function sceneDataFor(scopeId) {
   const ids = new Set(scopeChildren(scopeId));
   const nodes = [...ids].map(id => allNodes.get(id));
-  // Build brand-new link objects (plain string source/target) every time.
-  // 3d-force-graph mutates link.source/target into node-object references
-  // the first time it renders a link; reusing the same link objects across
-  // scope switches means some links in a batch are still plain strings
-  // while others already got mutated, and the library doesn't handle that
-  // mix reliably - links silently fail to attach to a visible node.
+  // Fresh link objects every time: 3d-force-graph mutates link.source/target
+  // into node references on first render, and reusing link objects across
+  // scope switches mixes plain strings with mutated ones in one batch,
+  // which makes links silently fail to attach to a visible node.
   const links = allLinks
     .filter(l => l.kind !== 'defines' && ids.has(endpointId(l.source)) && ids.has(endpointId(l.target)))
     .map(l => ({ source: endpointId(l.source), target: endpointId(l.target), kind: l.kind }));

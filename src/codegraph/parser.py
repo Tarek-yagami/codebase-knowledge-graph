@@ -239,12 +239,17 @@ def _resolve_self_call(class_id: str, method: str, nodes: dict[str, Node], bases
 
 
 def parse_repo(root: Path, exclude: tuple[str, ...] = ("test", "tests", "build", "docs")) -> ParseResult:
+    if not root.is_dir():
+        raise FileNotFoundError(f"not a directory: {root}")
+
     result = ParseResult()
     py_files = [
         f
         for f in root.rglob("*.py")
         if not any(part in exclude for part in f.relative_to(root).parts)
     ]
+    if not py_files:
+        raise ValueError(f"no .py files found under {root} (excluding {exclude})")
     all_defined_names: dict[str, list[str]] = {}  # short name -> every node id with that name
 
     visitors = []
