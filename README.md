@@ -4,40 +4,50 @@
 
 ## What this is
 
-An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it. You can click through the graph as it forms: nodes are the files, functions, and classes in the repo, and edges capture how they actually relate to each other, through imports, function calls, and class inheritance recovered by static analysis, plus semantic similarity from embeddings. Once the graph exists, you can ask questions about the codebase and get an answer built by walking the graph and retrieving from it, which is the idea behind [GraphRAG](https://arxiv.org/abs/2404.16130) rather than the usual flat-chunk RAG approach.
+An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it. You can click through the graph as it forms: nodes are the files, functions, and classes in the repo, and edges capture how they actually relate to each other, through imports, function calls, and class inheritance recovered by static analysis, plus semantic similarity from embeddings. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
 
 ## The real problem
 
-Understanding an unfamiliar codebase is slow, and it's something almost every developer has felt firsthand. Plain text-chunk RAG treats a codebase as a pile of documents and loses the thing that actually matters, which is the structure: who calls whom, what depends on what, what would break if you changed this one function. A knowledge graph keeps that structure visible, so once you combine it with semantic retrieval the system can answer structural questions like "what would break if I change this" alongside conceptual ones like "where's the logic that handles X", right where flat RAG tends to fall apart.
+Understanding an unfamiliar codebase is slow, and it's something almost every developer has felt firsthand. A knowledge graph makes that structure visible and walkable instead of hidden inside files you have to read one at a time. Whether making the structure explicit, real nodes, real edges, actually produces better answers than a good semantic search over the same code was treated as a real, open question here rather than assumed, and testing it honestly turned out to be as much a part of this project as building the graph itself.
 
-Microsoft's GraphRAG research treats this as a real, current technique, and tools like Sourcegraph Cody and GitHub's code navigation exist because the need behind it is real too.
+## The honest bottom line
+
+Two different things got tested, and they came back with different answers.
+
+Does the graph make Claude Code's answers *better*? No, not in any way this project could detect, even after deliberately designing questions to stress it. Does the graph make Claude Code *cheaper*? Yes, modestly and inconsistently, but really. Full evidence for both is below.
+
+So the value this project actually delivers is narrower than the original pitch, structured retrieval doesn't seem to produce smarter answers, at least not for an agent already capable of iterating on its own. What holds up is a real, if uneven, cost saving when Claude Code has structural access instead of grepping cold, plus something no flat-chunk system can offer at all regardless of how good its retrieval is: an actual, explorable 3D map of how a codebase fits together. That's a different kind of value, spatial orientation rather than answer accuracy, and it's not something the quality comparison below was ever positioned to capture either way.
 
 ## Research questions
 
-1. Does structural graph traversal plus semantic retrieval answer real "how does X relate to Y" questions about a codebase better than plain flat-chunk RAG over the same code?
+1. Does structural graph traversal plus semantic retrieval answer real "how does X relate to Y" questions about a codebase better than plain flat-chunk RAG over the same code? **Tested: no.**
 2. How much of a codebase's real structure can static analysis recover automatically, and where does it break down, say with dynamic dispatch, reflection, or metaprogramming?
 3. Can the exploration stay visible and still be fast enough to hold up in a demo on a real, non-trivial repo?
-4. How much cheaper is answering a real codebase question through the pre-built graph compared to a general coding agent that explores the repo from scratch with only file tools, at the same answer quality? Static analysis recovers structure for free, so the graph should be trading a near-zero indexing cost against tokens a general agent burns doing that same mechanical exploration by hand, and that difference should widen the more questions get asked against the same codebase.
+4. How much cheaper is answering a real codebase question through the pre-built graph compared to a general coding agent that explores the repo from scratch with only file tools, at the same answer quality? **Tested: yes, modestly.**
 
-## What the token-economy experiment found
+## What the token-economy experiment found (research question 4)
 
-Research question 4 got tested directly: the same real questions were run twice through Claude Code, once with only its default file tools and once with the codegraph MCP server also available, first against `requests` (21 files) and then against Django's core package (846 files), to see whether a pre-built graph actually saves tokens over exploring a codebase cold, and whether that gap grows with codebase size the way the theory predicts.
+The same real questions were run twice through Claude Code, once with only its default file tools and once with the codegraph MCP server also available, first against `requests` (21 files) and then against Django's core package (846 files), to see whether a pre-built graph actually saves tokens over exploring a codebase cold, and whether that gap grows with codebase size the way the theory predicts.
 
 It does. On `requests`, the graph condition used about 5% fewer tokens overall, a real but modest edge. On Django, that grew to about 14% fewer tokens overall, and the clearest single result in the whole experiment was "how many classes define `save()` and how do they relate": the graph answered it in 16 turns and 22% fewer tokens, where the file-reading baseline needed 26 turns to track down the same set of methods by hand.
 
-The experiment also caught a real bug in the tool along the way. Common-word searches (`close()`, `clean()`) sometimes backfired, since `search_nodes` matched against docstrings as well as names, and a docstring casually mentioning "clean" has nothing to do with a method actually named `clean`. Splitting that into a precise `find_by_name` lookup plus a ranked, clearly-labeled fuzzy search fixed the worst case outright, the `close()` question went from a loss against baseline to using less than half the tokens it needed before. A second case (`clean()` on Django) showed the fix working correctly, a clean, noise-free result either way, but the token count that run came down to how verbose Claude chose to be in its answer rather than the tool itself, a reminder that one trial per condition can't fully separate a real effect from ordinary run-to-run variance.
+The experiment also caught a real bug in the tool along the way. Common-word searches (`close()`, `clean()`) sometimes backfired, since `search_nodes` matched against docstrings as well as names, and a docstring casually mentioning "clean" has nothing to do with a method actually named `clean`. Splitting that into a precise `find_by_name` lookup plus a ranked, clearly-labeled fuzzy search fixed the worst case outright, the `close()` question went from a loss against baseline to using less than half the tokens it needed before.
 
 One more honest finding: total dollar cost barely moved between conditions in either experiment, because it's dominated by a fixed per-call cost of loading the system prompt and tool definitions, not by how much exploring happened. Token count, not cost, is the metric that actually reflects what's being tested here.
 
+## What the graph-vs-flat-RAG experiment found (research question 1)
+
+This one compared answer quality directly: Claude Code with only a structural graph tool against Claude Code with only a flat semantic-search tool built from the exact same embeddings, no relationships, no structure, just isolated code chunks ranked by meaning. Both conditions were deliberately denied Read/Grep/Glob, so neither could fall back to just reading files.
+
+On straightforward relationship questions (does this class inherit from that one, what does this method call), both conditions gave equally correct answers. The real test was two questions designed to stress recall: "list every class that defines a `save()` method" (21 real ones in Django) and "list every place `clean()` is defined" (28 real ones). Flat-chunk retrieval has no guaranteed way to surface a complete list like that, top-k similarity search could plausibly miss some. It didn't. Every line number both conditions cited was cross-checked against the real Django source directly, and both answers referenced the exact same complete set, 21 out of 21, 28 out of 28, every time.
+
+Turn counts told an inconsistent story rather than a clean one. On `clean()`, the graph needed 5 turns against flat-RAG's 18. On `save()`, the graph needed 24 against flat-RAG's 21, flat-RAG was faster there. And on the one concrete factual error found in either experiment, the graph condition was the one that got it wrong: it labeled line 1399 of `forms/models.py` as `ModelChoiceField.clean`, when the real class at that line is `InlineForeignKeyField`. Flat-RAG named it correctly. The graph also undercounted its own complete, correct list as "27 definitions" when it had actually listed all 28, a self-counting slip rather than a missing item, but still an error the flat-chunk answer didn't make.
+
+The likely explanation isn't that structure is worthless, it's that this comparison wasn't as clean a test of it as it looked. Both conditions are driven by the same capable, iterative Claude Code agent, which can just call its tool again with different phrasing to compensate for weaker retrieval. A true single-shot RAG benchmark, retrieve once, answer from that alone, no iteration, would likely show a real gap. What got tested here is closer to "does an agentic assistant benefit from a graph tool versus a flat-chunk tool", both agentic, both able to iterate, and under that framing, near-parity is a legitimate result, not a flaw in the test.
+
 ## Status
 
-The static analysis pipeline and the 3D graph viewer already work end to end, tested against the real `requests` library. It parses a repo into modules, functions, and classes, builds the graph, and renders it as a scene you can click through in 3D, where each node opens into its own self-contained view of what's inside it.
-
-The graph is also exposed as an MCP server (`src/codegraph_mcp/server.py`), so Claude Code itself can call it directly, asking who calls a function or what a module depends on, instead of reading and grepping through files to work that out by hand. Claude Code is the actual agent here, just handed a cheaper tool for the one kind of question a file-reading agent is worst at.
-
-This has already been tested live: asking Claude Code real questions about `requests` through the connected MCP server, it consistently reached for the graph tool instead of opening files, and that testing surfaced two genuine gaps in the static analysis, which are now fixed. Call resolution used to match by name alone with no real confidence behind it, so `self.request()` inside one method could silently resolve to an unrelated function elsewhere that happened to share the name. It now only resolves a call when there's real evidence for where it goes: `self.x()` walks the enclosing class and its bases, a bare `x()` only resolves if the name is unambiguous across the whole codebase, and everything else is left honestly unresolved rather than guessed at. Separately, `@overload`-decorated type stubs were being parsed as if they were real, separate functions, which got cleaned up too.
-
-What's still missing is the semantic embedding layer and a flat-RAG baseline to compare it against, for research question 1. The token-economy experiment for research question 4 is done, see the findings above.
+The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. What's left is Docker/CI and final polish.
 
 ## Out of scope for now
 
