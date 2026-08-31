@@ -10,6 +10,9 @@ data/repos/
 # generated output, regenerate with scripts/visualize.py
 data/*.html
 
+# regenerable embedding cache, keyed by local absolute path anyway
+data/embedding_cache/
+
 .ipynb_checkpoints/
 .DS_Store
 

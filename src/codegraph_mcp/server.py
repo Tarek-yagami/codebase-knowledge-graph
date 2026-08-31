@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mcp.server.mcpserver import MCPServer
 
+from codegraph.embeddings import add_semantic_edges, embed_nodes, get_model
 from codegraph.graph import build_graph
 from codegraph.parser import parse_repo
 
@@ -35,6 +36,8 @@ mcp = MCPServer(
 
 _result = parse_repo(REPO_PATH)
 _graph = build_graph(_result)
+_embeddings = embed_nodes(_graph, REPO_PATH)
+add_semantic_edges(_graph, _embeddings)
 
 
 def _node_summary(node_id: str) -> dict:
@@ -86,11 +89,12 @@ def get_relationships(node_id: str) -> dict:
     """
     if node_id not in _graph.nodes:
         return {"error": f"no such node: {node_id}"}
+    skip = ("defines", "similar_to")  # similar_to is conceptual, not structural - see semantic_search
     outgoing = [
-        {"kind": d["kind"], "target": v} for _, v, d in _graph.out_edges(node_id, data=True) if d["kind"] != "defines"
+        {"kind": d["kind"], "target": v} for _, v, d in _graph.out_edges(node_id, data=True) if d["kind"] not in skip
     ]
     incoming = [
-        {"kind": d["kind"], "source": u} for u, _, d in _graph.in_edges(node_id, data=True) if d["kind"] != "defines"
+        {"kind": d["kind"], "source": u} for u, _, d in _graph.in_edges(node_id, data=True) if d["kind"] not in skip
     ]
     return {"node": node_id, "depends_on": outgoing, "depended_on_by": incoming}
 
@@ -117,6 +121,23 @@ def search_nodes(query: str) -> list[dict]:
         elif q in d.get("docstring", "").lower():
             tiers[2].append({**_node_summary(n), "matched_on": "docstring"})
     return (tiers[0] + tiers[1] + tiers[2])[:25]
+
+
+@mcp.tool()
+def semantic_search(query: str, top_k: int = 10) -> list[dict]:
+    """Find nodes whose *meaning* matches a natural-language description,
+    even when no import or call connects them and the name doesn't contain
+    your words at all - e.g. "code that handles retrying a failed request"
+    might surface a retry-related method that never says "retry" in its
+    name. Use this when search_nodes and find_by_name come up empty, or
+    when the question is about what a piece of code does rather than what
+    it's called or what calls it.
+    """
+    query_vec = get_model().encode([query], normalize_embeddings=True)[0]
+
+    scored = [(float(query_vec @ vec), node_id) for node_id, vec in _embeddings.items()]
+    scored.sort(reverse=True)
+    return [{**_node_summary(node_id), "similarity": round(score, 3)} for score, node_id in scored[:top_k]]
 
 
 @mcp.tool()
