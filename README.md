@@ -21,8 +21,8 @@ So the value this project actually delivers is narrower than the original pitch,
 ## Research questions
 
 1. Does structural graph traversal plus semantic retrieval answer real "how does X relate to Y" questions about a codebase better than plain flat-chunk RAG over the same code? **Tested: no.**
-2. How much of a codebase's real structure can static analysis recover automatically, and where does it break down, say with dynamic dispatch, reflection, or metaprogramming?
-3. Can the exploration stay visible and still be fast enough to hold up in a demo on a real, non-trivial repo?
+2. How much of a codebase's real structure can static analysis recover automatically, and where does it break down, say with dynamic dispatch, reflection, or metaprogramming? **Tested: yes, three real limits found.**
+3. Can the exploration stay visible and still be fast enough to hold up in a demo on a real, non-trivial repo? **Tested: yes, with real numbers below.**
 4. How much cheaper is answering a real codebase question through the pre-built graph compared to a general coding agent that explores the repo from scratch with only file tools, at the same answer quality? **Tested: yes, modestly.**
 
 ## What the token-economy experiment found (research question 4)
@@ -45,9 +45,74 @@ Turn counts told an inconsistent story rather than a clean one. On `clean()`, th
 
 The likely explanation isn't that structure is worthless, it's that this comparison wasn't as clean a test of it as it looked. Both conditions are driven by the same capable, iterative Claude Code agent, which can just call its tool again with different phrasing to compensate for weaker retrieval. A true single-shot RAG benchmark, retrieve once, answer from that alone, no iteration, would likely show a real gap. What got tested here is closer to "does an agentic assistant benefit from a graph tool versus a flat-chunk tool", both agentic, both able to iterate, and under that framing, near-parity is a legitimate result, not a flaw in the test.
 
+## Where static analysis breaks down (research question 2)
+
+Three real limits showed up during actual use, not hypothetical ones.
+
+Name collisions are the biggest one. A call like `self.request()` only means one specific thing at runtime, but nothing in the source text says which one without knowing the type of `self`. Early on, this resolved to whichever function happened to be named `request` first in parse order, which was simply wrong more often than it was right. The fix was to stop guessing: `self.x()` now resolves against the enclosing class and its base classes specifically, and a bare `x()` only resolves if the name is unambiguous across the whole codebase. Everything else is left honestly unresolved. That's a real, permanent ceiling on what static analysis alone can determine, not a bug still waiting to be fixed.
+
+Typing overloads are a smaller, cleaner case. A method written as two or three `@overload` stub signatures followed by the real implementation is, to a naive AST walk, three separate functions sharing one name, which produced literal duplicate edges in the graph. The fix was to recognize and skip overload stubs entirely, since they're compile-time-only and carry no real behavior of their own.
+
+The hardest case can't be fixed at all, only acknowledged. Django defines `class Manager(BaseManager.from_queryset(QuerySet)):`, a base class that's the *return value of a function call*, not a name. Knowing what that resolves to requires actually running `from_queryset(QuerySet)`, which is exactly the kind of dynamic behavior static analysis is fundamentally unable to see. This is the honest edge of what parsing source text can ever tell you, no amount of cleverness in the parser closes that gap, only executing the code would.
+
+## How fast this stays at scale (research question 3)
+
+Parsing Django's core package (846 files, about 12,000 nodes) takes single-digit seconds once the OS has the files cached, and up to around 12 seconds cold. Semantic embeddings for all ~11,000 functions and classes take about 2 minutes the very first time, then get cached to disk and load in well under a second after that.
+
+What isn't cached yet, and honestly should be: the semantic similarity edges get recomputed from the cached embeddings on every single server startup, which took about 4-5 seconds in testing on Django's scale. Combined with parsing and import overhead, a fresh MCP server launch against Django lands somewhere in the 10-25 second range depending on how warm the filesystem cache is. That's fine for a single demo session, since the server stays running once started, but it's real, measured latency, not an assumption, and caching the similarity edges alongside the embeddings would be the obvious next fix if this needed to feel instant on every single launch.
+
 ## Status
 
-The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. What's left is Docker/CI and final polish.
+The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`) covering the parser's real correctness fixes, CI runs it on every push along with a Docker build check, and the visualization pipeline also runs in a container with no local Python setup needed. What's left is a couple of screenshots and general polish.
+
+## Try it yourself
+
+This is meant to be pointed at a real Python codebase you actually work with, not a random library picked for a demo, though any Python repo works if you just want to see it in action first.
+
+```bash
+git clone https://github.com/Tarek-yagami/codebase-knowledge-graph.git
+cd codebase-knowledge-graph
+python -m venv .venv
+.venv/Scripts/activate   # .venv/bin/activate on macOS/Linux
+pip install -r requirements.txt
+```
+
+Run the test suite with `pip install -r requirements-dev.txt && pytest`, it's self-contained and doesn't need any real repo cloned first.
+
+**See the 3D graph of your own project:**
+
+```bash
+python scripts/visualize.py /path/to/your/project
+```
+
+Opens `data/graph3d.html` in your browser. Click a module or class to step inside it, click the surrounding shell (or empty space) to step back out. That path can be any local Python codebase.
+
+Or with Docker, no local Python setup needed at all:
+
+```bash
+docker build -t codegraph-viz .
+docker run --rm -v /path/to/your/project:/repo -v "$(pwd)/data:/app/data" codegraph-viz /repo
+```
+
+(On Windows with Git Bash specifically, prefix that `docker run` with `MSYS_NO_PATHCONV=1`, otherwise Git Bash silently rewrites `/repo` into a Windows path before Docker ever sees it.)
+
+**Connect it to Claude Code, so it can query the codebase directly instead of grepping it:**
+
+Requires the standalone CLI (`npm install -g @anthropic-ai/claude-code`), separate from the Claude Code IDE extension. Copy `.mcp.json.example` to `.mcp.json`, fill in the real absolute paths for your machine and the project you want to explore, then run `claude` in this directory and approve the `codegraph` server when it asks. From there, just ask it real questions about that codebase, it can call `list_modules`, `get_relationships`, `search_nodes`, `find_by_name`, and `semantic_search` directly instead of reading and grepping files.
+
+**Reproduce the research specifically** (this needs `requests` and Django cloned locally, since the findings above are tied to those exact repos):
+
+```bash
+git clone --depth 1 https://github.com/psf/requests.git data/repos/requests
+git clone --depth 1 https://github.com/django/django.git data/repos/django
+
+python experiments/token_economy/run_requests.py    # research question 4
+python experiments/token_economy/summarize.py
+python experiments/rq1_graphrag_vs_flatrag/run_requests.py   # research question 1
+python experiments/rq1_graphrag_vs_flatrag/summarize.py
+```
+
+Each one makes real, billed calls through the `claude` CLI (a handful of cents per run on `requests`), and results are saved incrementally so an interrupted run picks up where it left off.
 
 ## Out of scope for now
 
