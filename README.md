@@ -43,7 +43,7 @@ On straightforward relationship questions (does this class inherit from that one
 
 Turn counts told an inconsistent story rather than a clean one. On `clean()`, the graph needed 5 turns against flat-RAG's 18. On `save()`, the graph needed 24 against flat-RAG's 21, flat-RAG was faster there. And on the one concrete factual error found in either experiment, the graph condition was the one that got it wrong: it labeled line 1399 of `forms/models.py` as `ModelChoiceField.clean`, when the real class at that line is `InlineForeignKeyField`. Flat-RAG named it correctly. The graph also undercounted its own complete, correct list as "27 definitions" when it had actually listed all 28, a self-counting slip rather than a missing item, but still an error the flat-chunk answer didn't make.
 
-The likely explanation isn't that structure is worthless, it's that this comparison wasn't as clean a test of it as it looked. Both conditions are driven by the same capable, iterative Claude Code agent, which can just call its tool again with different phrasing to compensate for weaker retrieval. A true single-shot RAG benchmark, retrieve once, answer from that alone, no iteration, would likely show a real gap. What got tested here is closer to "does an agentic assistant benefit from a graph tool versus a flat-chunk tool", both agentic, both able to iterate, and under that framing, near-parity is a legitimate result, not a flaw in the test.
+The likely explanation is that this comparison wasn't as clean a test of structure's value as it looked. Both conditions are driven by the same capable, iterative Claude Code agent, which can just call its tool again with different phrasing to compensate for weaker retrieval. A true single-shot RAG benchmark, retrieve once, answer from that alone, no iteration, would likely show a real gap. What got tested here is closer to "does an agentic assistant benefit from a graph tool versus a flat-chunk tool", both agentic, both able to iterate. Under that framing, near-parity is a legitimate result rather than a flaw in the test.
 
 ## Where static analysis breaks down (research question 2)
 
@@ -67,7 +67,7 @@ The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic 
 
 ## Try it yourself
 
-This is meant to be pointed at a real Python codebase you actually work with, not a random library picked for a demo, though any Python repo works if you just want to see it in action first.
+This is meant to be pointed at a real Python codebase you actually work with. Any Python repo works if you just want to see it in action first.
 
 ```bash
 git clone https://github.com/Tarek-yagami/codebase-knowledge-graph.git
