@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        # networkx + pytest only - the test suite covers parser.py and
+        # graph.py, neither of which touches embeddings.py, so there's no
+        # need to pull in sentence-transformers/torch here.
+        run: pip install networkx pytest
+
+      - name: Run tests
+        run: pytest
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t codegraph-viz .
