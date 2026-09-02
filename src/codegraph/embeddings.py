@@ -9,7 +9,9 @@ every time would be slow.
 from __future__ import annotations
 
 import hashlib
+import os
 import pickle
+import tempfile
 from pathlib import Path
 
 import networkx as nx
@@ -65,12 +67,29 @@ def embed_nodes(g: nx.MultiDiGraph, repo_root: Path, use_cache: bool = True) -> 
 
     if use_cache:
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        cache_file.write_bytes(pickle.dumps(result))
+        _write_atomic(cache_file, pickle.dumps(result))
 
     return result
 
 
-def add_semantic_edges(g: nx.MultiDiGraph, embeddings: dict[str, np.ndarray], top_k: int = 5, threshold: float = 0.55) -> int:
+def _write_atomic(path: Path, data: bytes) -> None:
+    """Writes via a temp file + atomic rename, so a second process starting
+    the same MCP server concurrently against the same repo never reads a
+    half-written cache file.
+    """
+    fd, tmp_path = tempfile.mkstemp(dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp_path, path)
+    except BaseException:
+        os.unlink(tmp_path)
+        raise
+
+
+def add_semantic_edges(
+    g: nx.MultiDiGraph, embeddings: dict[str, np.ndarray], top_k: int = 5, threshold: float = 0.55
+) -> int:
     """Adds a 'similar_to' edge from each node to its top_k nearest neighbors
     by cosine similarity (vectors are pre-normalized, so this is a dot
     product), skipping anything below `threshold`. Returns edges added.
