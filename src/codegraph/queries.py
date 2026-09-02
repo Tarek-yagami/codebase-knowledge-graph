@@ -46,9 +46,7 @@ def get_relationships(g: nx.MultiDiGraph, node_id: str) -> dict:
     outgoing = [
         {"kind": d["kind"], "target": v} for _, v, d in g.out_edges(node_id, data=True) if d["kind"] not in skip
     ]
-    incoming = [
-        {"kind": d["kind"], "source": u} for u, _, d in g.in_edges(node_id, data=True) if d["kind"] not in skip
-    ]
+    incoming = [{"kind": d["kind"], "source": u} for u, _, d in g.in_edges(node_id, data=True) if d["kind"] not in skip]
     return {"node": node_id, "depends_on": outgoing, "depended_on_by": incoming}
 
 

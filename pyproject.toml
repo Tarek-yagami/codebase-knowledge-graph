@@ -27,3 +27,23 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# these scripts insert src/ onto sys.path so they can be run directly
+# without installing the package first, which needs the import to come
+# after the path is set up
+"src/codegraph_mcp/*.py" = ["E402"]
+"scripts/*.py" = ["E402"]
+"experiments/**/*.py" = ["E402", "E501"]  # long natural-language question strings
+
+[tool.mypy]
+python_version = "3.10"
+packages = ["codegraph", "codegraph_mcp"]
+mypy_path = "src"
+ignore_missing_imports = true

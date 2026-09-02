@@ -3,8 +3,9 @@ from codegraph.parser import parse_repo
 
 
 def test_build_graph_matches_parse_result(make_repo):
-    repo = make_repo({
-        "a.py": '''
+    repo = make_repo(
+        {
+            "a.py": """
 class Base:
     def run(self):
         pass
@@ -13,8 +14,9 @@ class Base:
 class Child(Base):
     def go(self):
         return self.run()
-'''
-    })
+"""
+        }
+    )
     result = parse_repo(repo)
     g = build_graph(result)
 
@@ -24,9 +26,11 @@ class Child(Base):
 
 
 def test_graph_stats_counts_by_kind(make_repo):
-    repo = make_repo({
-        "a.py": "def f():\n    pass\n\n\nclass C:\n    pass\n",
-    })
+    repo = make_repo(
+        {
+            "a.py": "def f():\n    pass\n\n\nclass C:\n    pass\n",
+        }
+    )
     g = build_graph(parse_repo(repo))
     stats = graph_stats(g)
 

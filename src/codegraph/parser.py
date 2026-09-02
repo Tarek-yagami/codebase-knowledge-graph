@@ -44,7 +44,7 @@ class _RawImport:
     module_part: str | None  # the "X" in "from X import ..."; None for "from . import Y"
 
 
-def _resolve_import(raw: "_RawImport") -> str | None:
+def _resolve_import(raw: _RawImport) -> str | None:
     """Resolves a relative or absolute import to a dotted module-id candidate,
     using the same flat dotted-path scheme as _module_id. Returns None only
     when there's nothing to resolve (e.g. a bare `import os` handled by caller).
@@ -64,7 +64,7 @@ def _resolve_import(raw: "_RawImport") -> str | None:
     return ".".join(parts) if parts else None
 
 
-def _is_overload(node) -> bool:
+def _is_overload(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     for dec in node.decorator_list:
         name = dec.attr if isinstance(dec, ast.Attribute) else getattr(dec, "id", None)
         if name == "overload":
@@ -93,7 +93,7 @@ class _FileVisitor(ast.NodeVisitor):
         # the method's class rather than needing its own class scope.
         self._class_stack: list[str] = []
 
-    def _snippet(self, node: ast.AST) -> str:
+    def _snippet(self, node: ast.stmt) -> str:
         start = node.lineno - 1
         end = getattr(node, "end_lineno", node.lineno)
         return "\n".join(self.source_lines[start:end])[:1500]
@@ -143,7 +143,7 @@ class _FileVisitor(ast.NodeVisitor):
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self._visit_function(node)
 
-    def _visit_function(self, node) -> None:
+    def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         if _is_overload(node):
             # Typing overload stubs share a name with the real implementation
             # and aren't real, separate functions - skip them entirely rather
@@ -178,7 +178,7 @@ class _FileVisitor(ast.NodeVisitor):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 self.visit(child)
 
-    def _calls_in(self, func_node) -> tuple[set[str], set[str]]:
+    def _calls_in(self, func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[set[str], set[str]]:
         """Splits calls into ones we can actually resolve with confidence:
         `self.x()` calls (resolvable against the enclosing class and its
         bases) and bare `x()` calls (resolvable only if the name is
@@ -220,7 +220,9 @@ def parse_file(file: Path, root: Path) -> _FileVisitor:
     return visitor
 
 
-def _resolve_self_call(class_id: str, method: str, nodes: dict[str, Node], bases_of: dict[str, list[str]]) -> str | None:
+def _resolve_self_call(
+    class_id: str, method: str, nodes: dict[str, Node], bases_of: dict[str, list[str]]
+) -> str | None:
     """Looks for `method` on class_id itself, then breadth-first up its base
     classes - covers the common inherited-but-not-overridden case.
     """
@@ -243,11 +245,7 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = ("test", "tests", "build",
         raise FileNotFoundError(f"not a directory: {root}")
 
     result = ParseResult()
-    py_files = [
-        f
-        for f in root.rglob("*.py")
-        if not any(part in exclude for part in f.relative_to(root).parts)
-    ]
+    py_files = [f for f in root.rglob("*.py") if not any(part in exclude for part in f.relative_to(root).parts)]
     if not py_files:
         raise ValueError(f"no .py files found under {root} (excluding {exclude})")
     all_defined_names: dict[str, list[str]] = {}  # short name -> every node id with that name

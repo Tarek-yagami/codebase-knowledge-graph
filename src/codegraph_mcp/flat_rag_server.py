@@ -51,12 +51,14 @@ def search_chunks(query: str, top_k: int = 8) -> list[dict]:
     chunks = []
     for score, node_id in ranked:
         data = _graph.nodes[node_id]
-        chunks.append({
-            "file": data["file"],
-            "line": data["lineno"],
-            "similarity": round(score, 3),
-            "source": data.get("source") or data.get("docstring", ""),
-        })
+        chunks.append(
+            {
+                "file": data["file"],
+                "line": data["lineno"],
+                "similarity": round(score, 3),
+                "source": data.get("source") or data.get("docstring", ""),
+            }
+        )
     return chunks
 
 

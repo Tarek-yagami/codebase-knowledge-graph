@@ -19,14 +19,16 @@ def mcp_config(server_name: str, server_script: str, repo: Path) -> str:
     """Builds an inline --mcp-config JSON string for one of our MCP servers
     in src/codegraph_mcp/, pointed at the given target repo.
     """
-    return json.dumps({
-        "mcpServers": {
-            server_name: {
-                "command": str(PYTHON_BIN),
-                "args": [str(ROOT / "src" / "codegraph_mcp" / server_script), str(repo)],
+    return json.dumps(
+        {
+            "mcpServers": {
+                server_name: {
+                    "command": str(PYTHON_BIN),
+                    "args": [str(ROOT / "src" / "codegraph_mcp" / server_script), str(repo)],
+                }
             }
         }
-    })
+    )
 
 
 def run_claude(question: str, repo: Path, tools: str, mcp_config_json: str | None = None, timeout: int = 180) -> dict:
@@ -94,8 +96,10 @@ def summarize(results_path: Path, label_a: str, label_b: str) -> None:
         print(f"  {label_b}: {b['tokens']} tokens (input+output), {b['turns']} turns, ${b['cost']} total")
         if a["tokens"] and b["tokens"]:
             diff = (1 - b["tokens"] / a["tokens"]) * 100
-            print(f"  -> {label_b} used {diff:.0f}% {'fewer' if diff > 0 else 'more'} tokens, "
-                  f"{a['turns'] - b['turns']:+d} turns")
+            print(
+                f"  -> {label_b} used {diff:.0f}% {'fewer' if diff > 0 else 'more'} tokens, "
+                f"{a['turns'] - b['turns']:+d} turns"
+            )
         print(f"  [{label_a}] {r[label_a].get('result', '(error)')}")
         print(f"  [{label_b}] {r[label_b].get('result', '(error)')}")
 
@@ -106,9 +110,13 @@ def summarize(results_path: Path, label_a: str, label_b: str) -> None:
                 totals[label]["tokens"] += s["tokens"]
 
     print("=" * 100)
-    print(f"TOTAL tokens (input+output): {label_a} {totals[label_a]['tokens']}  vs  {label_b} {totals[label_b]['tokens']}")
-    print(f"TOTAL cost (dominated by fixed per-call cache overhead, not exploration): "
-          f"{label_a} ${totals[label_a]['cost']:.4f}  vs  {label_b} ${totals[label_b]['cost']:.4f}")
+    print(
+        f"TOTAL tokens (input+output): {label_a} {totals[label_a]['tokens']}  vs  {label_b} {totals[label_b]['tokens']}"
+    )
+    print(
+        f"TOTAL cost (dominated by fixed per-call cache overhead, not exploration): "
+        f"{label_a} ${totals[label_a]['cost']:.4f}  vs  {label_b} ${totals[label_b]['cost']:.4f}"
+    )
     if totals[label_a]["tokens"]:
         savings = (1 - totals[label_b]["tokens"] / totals[label_a]["tokens"]) * 100
         print(f"Overall: {label_b} used {savings:.0f}% {'fewer' if savings > 0 else 'more'} tokens than {label_a}")

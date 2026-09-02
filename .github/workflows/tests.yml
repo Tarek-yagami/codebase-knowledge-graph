@@ -23,6 +23,29 @@ jobs:
       - name: Run tests
         run: pytest
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # ignore_missing_imports covers mcp/sentence-transformers, no need to
+      # install the heavy ones just to typecheck our own code against them
+      - run: pip install networkx numpy mypy
+      - run: mypy
+
   docker-build:
     runs-on: ubuntu-latest
     steps:
