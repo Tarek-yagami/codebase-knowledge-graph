@@ -102,7 +102,7 @@ docker run --rm -v /path/to/your/project:/repo -v "$(pwd)/data:/app/data" codegr
 
 **Connect it to Claude Code, so it can query the codebase directly instead of grepping it:**
 
-Requires the standalone CLI (`npm install -g @anthropic-ai/claude-code`), separate from the Claude Code IDE extension. Copy `.mcp.json.example` to `.mcp.json`, fill in the real absolute paths for your machine and the project you want to explore, then run `claude` in this directory and approve the `codegraph` server when it asks. From there, just ask it real questions about that codebase, it can call `list_modules`, `get_relationships`, `search_nodes`, `find_by_name`, and `semantic_search` directly instead of reading and grepping files.
+Requires the standalone CLI (`npm install -g @anthropic-ai/claude-code`), separate from the Claude Code IDE extension. This repo is also a real installable package (`pip install .`, or straight from GitHub with `pip install git+https://github.com/Tarek-yagami/codebase-knowledge-graph.git`), which gives you a plain `codegraph-mcp` command instead of a long `python path/to/server.py` invocation. Either way, copy `.mcp.json.example` to `.mcp.json`, fill in the real paths for your machine and the project you want to explore, then run `claude` in this directory and approve the `codegraph` server when it asks. From there, just ask it real questions about that codebase, it can call `list_modules`, `get_relationships`, `search_nodes`, `find_by_name`, and `semantic_search` directly instead of reading and grepping files.
 
 **Reproduce the research specifically** (this needs `requests` and Django cloned locally, since the findings above are tied to those exact repos):
 
