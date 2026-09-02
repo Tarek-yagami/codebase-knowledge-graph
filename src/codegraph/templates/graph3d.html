@@ -153,8 +153,9 @@ function sceneDataFor(scopeId) {
     .filter(l => l.kind !== 'defines' && ids.has(endpointId(l.source)) && ids.has(endpointId(l.target)))
     .map(l => ({ source: endpointId(l.source), target: endpointId(l.target), kind: l.kind }));
 
-  // Integrity check: surface it on-screen immediately if this is ever wrong,
-  // instead of guessing from how it looks.
+  // Integrity check: if a link's endpoints ever aren't in the current node
+  // set, surface it as a visible on-screen warning rather than a silent
+  // rendering glitch.
   const nodeIdSet = new Set(nodes.map(n => n.id));
   const bad = links.filter(l => !nodeIdSet.has(l.source) || !nodeIdSet.has(l.target));
   const warningEl = document.getElementById('warning');
@@ -246,10 +247,10 @@ function buildShell(childCount) {
   clearShell();
   const radius = 55 + Math.sqrt(childCount) * 14;
 
-  // depthWrite: false + low renderOrder - the shell is a purely visual aura,
-  // it must never occlude nodes/edges behind it (nodes are opaque and would
-  // get properly hidden by it otherwise, while edges ignore its depth
-  // entirely - that mismatch is what looked like "phantom" dangling edges).
+  // depthWrite: false + low renderOrder - the shell is a purely visual aura
+  // and must never occlude anything behind it. Without this, opaque nodes
+  // get correctly hidden by the shell while edges ignore its depth
+  // entirely, an inconsistency that reads as edges with no visible node.
   const fillGeo = new THREE.SphereGeometry(radius, 32, 24);
   const fillMat = new THREE.MeshBasicMaterial({
     color: 0x2d5bb8, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false,

@@ -8,6 +8,8 @@
 
 An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it. You can click through the graph as it forms: nodes are the files, functions, and classes in the repo, and edges capture how they actually relate to each other, through imports, function calls, and class inheritance recovered by static analysis, plus semantic similarity from embeddings. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
 
+**Want to just use it?** Skip straight to the **[usage guide](docs/USAGE.md)** for install options, connecting it to Claude Code, and a full tool reference. Everything below this point is the research story: what was tested, what held up, and what didn't.
+
 <p align="center">
   <img src="docs/screenshots/overview.png" width="48%" alt="Module-level overview of the requests library as a 3D graph">
   <img src="docs/screenshots/inside_module.png" width="48%" alt="Inside the sessions module, showing its classes and functions inside a translucent shell">
@@ -71,56 +73,11 @@ What isn't cached yet, and honestly should be: the semantic similarity edges get
 
 ## Status
 
-The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`) covering the parser's real correctness fixes, CI runs it on every push along with a Docker build check, and the visualization pipeline also runs in a container with no local Python setup needed.
+The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 27 tests), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
 
 ## Try it yourself
 
-This is meant to be pointed at a real Python codebase you actually work with. Any Python repo works if you just want to see it in action first.
-
-```bash
-git clone https://github.com/Tarek-yagami/codebase-knowledge-graph.git
-cd codebase-knowledge-graph
-python -m venv .venv
-.venv/Scripts/activate   # .venv/bin/activate on macOS/Linux
-pip install -r requirements.txt
-```
-
-Run the test suite with `pip install -r requirements-dev.txt && pytest`, it's self-contained and doesn't need any real repo cloned first.
-
-**See the 3D graph of your own project:**
-
-```bash
-python scripts/visualize.py /path/to/your/project
-```
-
-Opens `data/graph3d.html` in your browser. Click a module or class to step inside it, click the surrounding shell (or empty space) to step back out. That path can be any local Python codebase.
-
-Or with Docker, no local Python setup needed at all:
-
-```bash
-docker build -t codegraph-viz .
-docker run --rm -v /path/to/your/project:/repo -v "$(pwd)/data:/app/data" codegraph-viz /repo
-```
-
-(On Windows with Git Bash specifically, prefix that `docker run` with `MSYS_NO_PATHCONV=1`, otherwise Git Bash silently rewrites `/repo` into a Windows path before Docker ever sees it.)
-
-**Connect it to Claude Code, so it can query the codebase directly instead of grepping it:**
-
-Requires the standalone CLI (`npm install -g @anthropic-ai/claude-code`), separate from the Claude Code IDE extension. This repo is also a real installable package (`pip install .`, or straight from GitHub with `pip install git+https://github.com/Tarek-yagami/codebase-knowledge-graph.git`), which gives you a plain `codegraph-mcp` command instead of a long `python path/to/server.py` invocation. Either way, copy `.mcp.json.example` to `.mcp.json`, fill in the real paths for your machine and the project you want to explore, then run `claude` in this directory and approve the `codegraph` server when it asks. From there, just ask it real questions about that codebase, it can call `list_modules`, `get_relationships`, `search_nodes`, `find_by_name`, and `semantic_search` directly instead of reading and grepping files.
-
-**Reproduce the research specifically** (this needs `requests` and Django cloned locally, since the findings above are tied to those exact repos):
-
-```bash
-git clone --depth 1 https://github.com/psf/requests.git data/repos/requests
-git clone --depth 1 https://github.com/django/django.git data/repos/django
-
-python experiments/token_economy/run_requests.py    # research question 4
-python experiments/token_economy/summarize.py
-python experiments/rq1_graphrag_vs_flatrag/run_requests.py   # research question 1
-python experiments/rq1_graphrag_vs_flatrag/summarize.py
-```
-
-Each one makes real, billed calls through the `claude` CLI (a handful of cents per run on `requests`), and results are saved incrementally so an interrupted run picks up where it left off.
+See the **[usage guide](docs/USAGE.md)** for the quickstart, install options (pip, source checkout, Docker), connecting it to Claude Code, a tool reference, troubleshooting, and how to reproduce the research above.
 
 ## Out of scope for now
 

@@ -263,8 +263,9 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = ("test", "tests", "build",
 
     module_ids = {n.id for n in result.nodes.values() if n.kind == "module"}
 
-    # Stage 1: inherits, unchanged best-effort global resolution - rarer to
-    # collide than calls, and not something the observed gaps were about.
+    # Stage 1: inherits, global best-effort resolution. Base-class name
+    # collisions are much rarer in practice than call-site collisions, so
+    # this doesn't need the same confidence-gated approach as calls below.
     bases_of: dict[str, list[str]] = {}
     for v in visitors:
         for edge in v.edges:
