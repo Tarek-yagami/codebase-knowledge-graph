@@ -4,6 +4,9 @@ __pycache__/
 .venv/
 venv/
 .env
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 
 # repos cloned locally as demo/analysis targets, not vendored
 data/repos/
