@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mcp.server.mcpserver import MCPServer
 
+from codegraph import queries
 from codegraph.embeddings import embed_nodes, get_model
 from codegraph.graph import build_graph
 from codegraph.parser import parse_repo
@@ -45,11 +46,10 @@ def search_chunks(query: str, top_k: int = 8) -> list[dict]:
     other chunks are included.
     """
     query_vec = get_model().encode([query], normalize_embeddings=True)[0]
-    scored = [(float(query_vec @ vec), node_id) for node_id, vec in _embeddings.items()]
-    scored.sort(reverse=True)
+    ranked = queries.rank_by_similarity(_embeddings, query_vec, top_k)
 
     chunks = []
-    for score, node_id in scored[:top_k]:
+    for score, node_id in ranked:
         data = _graph.nodes[node_id]
         chunks.append({
             "file": data["file"],
@@ -60,5 +60,9 @@ def search_chunks(query: str, top_k: int = 8) -> list[dict]:
     return chunks
 
 
-if __name__ == "__main__":
+def main() -> None:
     mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

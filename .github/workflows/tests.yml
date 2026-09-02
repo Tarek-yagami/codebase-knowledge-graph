@@ -15,10 +15,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install test dependencies
-        # networkx + pytest only - the test suite covers parser.py and
-        # graph.py, neither of which touches embeddings.py, so there's no
-        # need to pull in sentence-transformers/torch here.
-        run: pip install networkx pytest
+        # networkx + numpy + pytest only - the test suite doesn't touch
+        # embeddings.py's actual model, so there's no need to pull in
+        # sentence-transformers/torch here.
+        run: pip install networkx numpy pytest
 
       - name: Run tests
         run: pytest
