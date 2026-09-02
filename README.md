@@ -1,10 +1,14 @@
 # Codebase Knowledge Graph
 
-*Work in progress.*
-
 ## What this is
 
 An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it. You can click through the graph as it forms: nodes are the files, functions, and classes in the repo, and edges capture how they actually relate to each other, through imports, function calls, and class inheritance recovered by static analysis, plus semantic similarity from embeddings. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
+
+<p align="center">
+  <img src="docs/screenshots/overview.png" width="48%" alt="Module-level overview of the requests library as a 3D graph">
+  <img src="docs/screenshots/inside_module.png" width="48%" alt="Inside the sessions module, showing its classes and functions inside a translucent shell">
+</p>
+<p align="center"><em>Left: the module-level overview of <code>requests</code>. Right: stepped inside the <code>sessions</code> module, its classes and functions floating inside their own self-contained shell.</em></p>
 
 ## The real problem
 
@@ -63,7 +67,7 @@ What isn't cached yet, and honestly should be: the semantic similarity edges get
 
 ## Status
 
-The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`) covering the parser's real correctness fixes, CI runs it on every push along with a Docker build check, and the visualization pipeline also runs in a container with no local Python setup needed. What's left is a couple of screenshots and general polish.
+The static analysis pipeline, the 3D graph viewer, the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`) covering the parser's real correctness fixes, CI runs it on every push along with a Docker build check, and the visualization pipeline also runs in a container with no local Python setup needed.
 
 ## Try it yourself
 
