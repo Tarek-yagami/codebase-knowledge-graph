@@ -1,5 +1,9 @@
 # Codebase Knowledge Graph
 
+[![tests](https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml/badge.svg)](https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+
 ## What this is
 
 An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it. You can click through the graph as it forms: nodes are the files, functions, and classes in the repo, and edges capture how they actually relate to each other, through imports, function calls, and class inheritance recovered by static analysis, plus semantic similarity from embeddings. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
