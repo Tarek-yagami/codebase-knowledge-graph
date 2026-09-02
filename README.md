@@ -6,7 +6,7 @@
 
 ## What this is
 
-An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it. You can click through the graph as it forms: nodes are the files, functions, and classes in the repo, and edges capture how they actually relate to each other, through imports, function calls, and class inheritance recovered by static analysis, plus semantic similarity from embeddings. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
+An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it, then lets you click through it as it forms. Files, functions, and classes become the nodes, and the edges between them come from how the code actually behaves: real imports, real function calls, real class inheritance pulled out by static analysis, plus a semantic layer from embeddings that connects pieces conceptually even when nothing directly calls or imports between them. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
 
 **[Try the live 3D graph](https://tarek-yagami.github.io/codebase-knowledge-graph/demo.html)**, no install, click straight into it. It's the `requests` library, pre-built and hosted as a static page, the same output `codegraph-viz` would generate for any Python codebase you point it at.
 
@@ -84,3 +84,10 @@ See the **[usage guide](docs/USAGE.md)** for the quickstart, install options (pi
 ## Out of scope for now
 
 Python only, rather than trying to parse multiple languages from the start. Static analysis has real limits around dynamic dispatch and reflection, and those limits are being accepted rather than solved. The goal is a strong local demo, not a hosted multi-user product, so there's no deployment work planned. The graph doesn't need a full incremental-update engine either, that's a nice-to-have rather than something the project depends on. And there's no fine-tuning anywhere in this.
+
+## Possible extensions
+
+- **Cache the similarity edges, not just the embeddings.** Right now they're recomputed from cache on every server startup (4-5 seconds on Django), which is the one piece of the "how fast does this stay" answer that's still avoidable overhead.
+- **A real single-shot RAG benchmark.** RQ1's comparison was diluted by both conditions sharing the same iterative agent. Testing graph vs. flat-chunk retrieval with exactly one retrieval call and no follow-up would isolate structure's actual value instead of the agent's ability to compensate for weak retrieval.
+- **Light type tracking for call resolution.** `self.x()` already resolves correctly; the next honest gap is a local variable built from a direct constructor call (`session = Session(); session.request()`). Tracking just that narrow pattern, not general type inference, would close a real chunk of what's currently left unresolved.
+- **Publish to PyPI.** `pip install git+...` works today; an actual PyPI release is the remaining step between "installable" and "the way people normally install a Python tool."
