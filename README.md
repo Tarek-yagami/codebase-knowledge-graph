@@ -8,7 +8,7 @@
 
 An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it, then lets you click through it as it forms. Files, functions, and classes become the nodes, and the edges between them come from how the code actually behaves: real imports, real function calls, real class inheritance pulled out by static analysis, plus a semantic layer from embeddings that connects pieces conceptually even when nothing directly calls or imports between them. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
 
-**[Try the live 3D graph](https://tarek-yagami.github.io/codebase-knowledge-graph/demo.html)**, no install, click straight into it. It's the `requests` library, pre-built and hosted as a static page, the same output `codegraph-viz` would generate for any Python codebase you point it at.
+**[Try the live 3D graph](https://tarek-yagami.github.io/codebase-knowledge-graph/)**, no install, click straight into it. It's the `requests` library, pre-built and hosted as a static page, the same output `codegraph-viz` would generate for any Python codebase you point it at.
 
 **Want to just use it?** Skip straight to the **[usage guide](docs/USAGE.md)** for install options, connecting it to Claude Code, and a full tool reference. Everything below this point is the research story: what was tested, what held up, and what didn't.
 
@@ -75,7 +75,7 @@ What isn't cached yet, and honestly should be: the semantic similarity edges get
 
 ## Status
 
-The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/demo.html), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 27 tests), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
+The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 27 tests), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
 
 ## Try it yourself
 
