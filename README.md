@@ -75,7 +75,7 @@ What isn't cached yet, and honestly should be: the semantic similarity edges get
 
 ## Status
 
-The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 27 tests), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
+The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 31 tests), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
 
 ## Try it yourself
 

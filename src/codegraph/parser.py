@@ -206,12 +206,15 @@ def parse_file(file: Path, root: Path) -> _FileVisitor:
     source = file.read_text(encoding="utf-8", errors="replace")
     tree = ast.parse(source, filename=str(file))
     module_id = _module_id(file, root)
-    visitor = _FileVisitor(module_id, str(file.relative_to(root)), source.splitlines())
+    # Forward slashes on every platform, so a file's stored path matches what
+    # `git diff --name-only` reports even on Windows (used by impact_of_changes).
+    rel_file = str(file.relative_to(root)).replace("\\", "/")
+    visitor = _FileVisitor(module_id, rel_file, source.splitlines())
     visitor.nodes[module_id] = Node(
         id=module_id,
         kind="module",
         name=module_id,
-        file=str(file.relative_to(root)),
+        file=rel_file,
         lineno=1,
         end_lineno=len(visitor.source_lines),
         docstring=ast.get_docstring(tree) or "",

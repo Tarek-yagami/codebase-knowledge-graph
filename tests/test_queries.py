@@ -114,6 +114,57 @@ def test_find_by_name_no_match(make_repo):
     assert queries.find_by_name(g, "nonexistent") == []
 
 
+def test_impact_of_changes_finds_direct_and_transitive_callers(make_repo):
+    files = {
+        "core.py": "def target():\n    pass\n",
+        "mid.py": "from .core import target\n\ndef caller():\n    return target()\n",
+        "outer.py": "from .mid import caller\n\ndef entrypoint():\n    return caller()\n",
+        "unrelated.py": "def standalone():\n    pass\n",
+    }
+    g = build_graph(parse_repo(make_repo(files)))
+
+    result = queries.impact_of_changes(g, ["core.py"])
+
+    changed_ids = {n["id"] for n in result["changed_nodes"]}
+    impacted_ids = {n["id"] for n in result["impacted_nodes"]}
+    assert changed_ids == {"core", "core.target"}
+    assert "mid.caller" in impacted_ids
+    assert "outer.entrypoint" in impacted_ids
+    assert "unrelated.standalone" not in impacted_ids
+
+
+def test_impact_of_changes_no_changed_nodes_in_file(make_repo):
+    g = build_graph(parse_repo(make_repo({"a.py": "def f(): pass"})))
+    result = queries.impact_of_changes(g, ["nonexistent.py"])
+    assert result["changed_nodes"] == []
+    assert result["impacted_nodes"] == []
+
+
+def test_suggested_reading_order_puts_dependencies_before_dependents(make_repo):
+    files = {
+        "core.py": "def target():\n    pass\n",
+        "mid.py": "from .core import target\n",
+        "outer.py": "from .mid import caller\n",
+    }
+    g = build_graph(parse_repo(make_repo(files)))
+
+    order = [n["id"] for n in queries.suggested_reading_order(g)]
+
+    assert order.index("core") < order.index("mid") < order.index("outer")
+
+
+def test_suggested_reading_order_handles_import_cycles(make_repo):
+    files = {
+        "a.py": "from .b import thing\n",
+        "b.py": "from .a import other\n",
+    }
+    g = build_graph(parse_repo(make_repo(files)))
+
+    order = [n["id"] for n in queries.suggested_reading_order(g)]
+
+    assert set(order) == {"a", "b"}
+
+
 def test_rank_by_similarity_orders_by_score():
     embeddings = {"a": np.array([1.0, 0.0]), "b": np.array([0.0, 1.0]), "c": np.array([0.9, 0.1])}
     ranked = queries.rank_by_similarity(embeddings, np.array([1.0, 0.0]), top_k=2)

@@ -111,6 +111,27 @@ def find_by_name(name: str) -> list[dict]:
     return queries.find_by_name(_graph, name)
 
 
+@mcp.tool()
+def impact_of_changes(changed_files: list[str]) -> dict:
+    """Given file paths that changed (e.g. from `git diff --name-only`,
+    relative to the repo root), find every node that structurally depends on
+    them, directly or transitively, by walking calls/imports/inherits edges
+    outward. Use this before a commit or review to see the real blast radius
+    of a change, not just its immediate callers.
+    """
+    return queries.impact_of_changes(_graph, changed_files)
+
+
+@mcp.tool()
+def suggested_reading_order() -> list[dict]:
+    """List every module in a sensible order to read them in: each module's
+    real import dependencies come before it, so foundational modules appear
+    first and the modules that build on them follow. Useful for onboarding
+    onto an unfamiliar codebase without guessing where to start.
+    """
+    return queries.suggested_reading_order(_graph)
+
+
 def main() -> None:
     mcp.run(transport="stdio")
 

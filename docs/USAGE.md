@@ -76,6 +76,8 @@ If you installed the package, `.mcp.json` gets simpler:
 | `find_by_name` | You know the exact name you're looking for (e.g. every method literally called `save`), and want *all* of them, not a ranked top few. |
 | `search_nodes` | You don't know the exact name, but have a keyword or partial name in mind. Results are ranked: exact name match first, then partial, then docstring mention. |
 | `semantic_search` | You don't know the name *or* the keyword, only what the code should *do* (e.g. "code that retries a failed request"). |
+| `impact_of_changes` | You're about to change (or just changed) a file and want to know what actually depends on it before you commit. |
+| `suggested_reading_order` | You're new to the codebase and want a sensible order to read its modules in, dependencies first. |
 
 ## Troubleshooting
 
