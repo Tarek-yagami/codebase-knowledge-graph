@@ -9,7 +9,7 @@ from pathlib import Path
 
 import networkx as nx
 
-from codegraph.parser import ParseResult
+from codegraph.model import ParseResult
 
 
 def build_graph(result: ParseResult) -> nx.MultiDiGraph:
@@ -22,6 +22,7 @@ def build_graph(result: ParseResult) -> nx.MultiDiGraph:
             file=node.file,
             lineno=node.lineno,
             end_lineno=node.end_lineno,
+            language=node.language,
             docstring=node.docstring,
             source=node.source,
         )

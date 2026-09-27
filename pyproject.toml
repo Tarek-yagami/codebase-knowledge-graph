@@ -5,12 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "codebase-knowledge-graph"
 version = "0.1.0"
-description = "Turns a Python codebase into a live 3D knowledge graph and an MCP server Claude Code can query directly."
+description = "Turns a codebase in any major language into a live 3D knowledge graph and an MCP server Claude Code can query directly."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
     "networkx>=3.2",
+    "tree-sitter-language-pack>=1.20",
+    "json5>=0.9",
     "mcp>=1.0",
     "sentence-transformers>=3.0",
     "numpy>=1.26",

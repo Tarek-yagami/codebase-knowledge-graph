@@ -29,10 +29,10 @@ class Greeter:
     )
     result = parse_repo(repo)
 
-    assert result.nodes["greet"].kind == "module"
-    assert result.nodes["greet.hello"].kind == "function"
-    assert result.nodes["greet.Greeter"].kind == "class"
-    assert result.nodes["greet.Greeter.greet"].kind == "function"
+    assert result.nodes["greet.py"].kind == "module"
+    assert result.nodes["greet.py::hello"].kind == "function"
+    assert result.nodes["greet.py::Greeter"].kind == "class"
+    assert result.nodes["greet.py::Greeter.greet"].kind == "function"
 
 
 def test_relative_import_resolves_to_sibling_module(make_repo):
@@ -45,7 +45,7 @@ def test_relative_import_resolves_to_sibling_module(make_repo):
     result = parse_repo(repo)
 
     imports = edges_of_kind(result, "imports")
-    assert any(e.src == "views" and e.dst == "models" for e in imports)
+    assert any(e.src == "views.py" and e.dst == "models.py" for e in imports)
 
 
 def test_self_call_resolves_within_enclosing_class(make_repo):
@@ -68,8 +68,8 @@ class Session:
     result = parse_repo(repo)
 
     calls = edges_of_kind(result, "calls")
-    assert any(e.src == "b.Session.get" and e.dst == "b.Session.request" for e in calls)
-    assert not any(e.dst == "a.request" for e in calls)
+    assert any(e.src == "b.py::Session.get" and e.dst == "b.py::Session.request" for e in calls)
+    assert not any(e.dst == "a.py::request" for e in calls)
 
 
 def test_self_call_resolves_through_inheritance(make_repo):
@@ -90,7 +90,7 @@ class Child(Base):
     result = parse_repo(repo)
 
     calls = edges_of_kind(result, "calls")
-    assert any(e.src == "a.Child.shutdown" and e.dst == "a.Base.close" for e in calls)
+    assert any(e.src == "a.py::Child.shutdown" and e.dst == "a.py::Base.close" for e in calls)
 
 
 def test_bare_call_only_resolves_when_unambiguous(make_repo):
@@ -107,8 +107,8 @@ def use_ambiguous():
     result = parse_repo(repo)
 
     calls = edges_of_kind(result, "calls")
-    assert not any(e.src == "c.use_ambiguous" for e in calls)
-    assert ("c.use_ambiguous", "helper") in result.unresolved_calls
+    assert not any(e.src == "c.py::use_ambiguous" for e in calls)
+    assert ("c.py::use_ambiguous", "helper") in result.unresolved_calls
 
 
 def test_call_on_other_receiver_is_never_resolved(make_repo):
@@ -127,7 +127,7 @@ def use(kwargs):
     result = parse_repo(repo)
 
     calls = edges_of_kind(result, "calls")
-    assert not any(e.dst == "api.get" for e in calls)
+    assert not any(e.dst == "api.py::get" for e in calls)
 
 
 def test_overload_stubs_are_skipped(make_repo):
@@ -151,7 +151,7 @@ class HTTPBasicAuth:
     )
     result = parse_repo(repo)
 
-    defines = [e for e in edges_of_kind(result, "defines") if e.dst == "auth.HTTPBasicAuth.__init__"]
+    defines = [e for e in edges_of_kind(result, "defines") if e.dst == "auth.py::HTTPBasicAuth.__init__"]
     assert len(defines) == 1
 
 
@@ -178,8 +178,8 @@ class ConnectTimeout(ConnectionError, Timeout):
     )
     result = parse_repo(repo)
 
-    bases = {e.dst for e in edges_of_kind(result, "inherits") if e.src == "exceptions.ConnectTimeout"}
-    assert bases == {"exceptions.ConnectionError", "exceptions.Timeout"}
+    bases = {e.dst for e in edges_of_kind(result, "inherits") if e.src == "exceptions.py::ConnectTimeout"}
+    assert bases == {"exceptions.py::ConnectionError", "exceptions.py::Timeout"}
 
 
 def test_parse_repo_raises_on_missing_directory(tmp_path):
@@ -190,3 +190,129 @@ def test_parse_repo_raises_on_missing_directory(tmp_path):
 def test_parse_repo_raises_on_empty_directory(tmp_path):
     with pytest.raises(ValueError):
         parse_repo(tmp_path)
+
+
+def test_call_through_aliased_import_resolves_to_that_module(make_repo):
+    """`from .a import helper as h; h()` must reach a.helper even though
+    another module also defines a `helper`."""
+    repo = make_repo(
+        {
+            "a.py": "def helper():\n    pass\n",
+            "b.py": "def helper():\n    pass\n",
+            "c.py": "from .a import helper as h\n\n\ndef use():\n    return h()\n",
+        }
+    )
+    calls = edges_of_kind(parse_repo(repo), "calls")
+    assert any(e.src == "c.py::use" and e.dst == "a.py::helper" for e in calls)
+
+
+def test_module_alias_call_resolves(make_repo):
+    repo = make_repo(
+        {
+            "pkg/__init__.py": "",
+            "pkg/sessions.py": "class Session:\n    pass\n",
+            "pkg/api.py": "from . import sessions\n\n\ndef request():\n    return sessions.Session()\n",
+        }
+    )
+    calls = edges_of_kind(parse_repo(repo), "calls")
+    assert any(e.src == "pkg/api.py::request" and e.dst == "pkg/sessions.py::Session" for e in calls)
+
+
+def test_nested_function_belongs_to_its_function_and_is_callable(make_repo):
+    repo = make_repo(
+        {
+            "a.py": """
+class Response:
+    def iter_content(self):
+        def generate():
+            pass
+        return generate()
+"""
+        }
+    )
+    result = parse_repo(repo)
+    outer, nested = "a.py::Response.iter_content", "a.py::Response.iter_content.generate"
+    assert any(e.src == outer and e.dst == nested for e in edges_of_kind(result, "defines"))
+    assert any(e.src == outer and e.dst == nested for e in edges_of_kind(result, "calls"))
+
+
+def test_builtin_call_never_resolves_to_a_same_named_method(make_repo):
+    """The old bug: bare `set()` resolved to the only method called `set`."""
+    repo = make_repo(
+        {
+            "jar.py": "class Jar:\n    def set(self, k):\n        pass\n",
+            "cookie.py": "def create():\n    return set()\n",
+        }
+    )
+    calls = edges_of_kind(parse_repo(repo), "calls")
+    assert not any(e.src == "cookie.py::create" for e in calls)
+
+
+def test_name_imported_from_outside_the_repo_never_resolves_elsewhere(make_repo):
+    """`from typing import cast` means typing's cast, not the repo's only
+    `cast`. A same-file fallback in `except ImportError:` still counts."""
+    repo = make_repo(
+        {
+            "casts.py": "def cast():\n    pass\n",
+            "use.py": """
+from typing import cast
+
+try:
+    from socks import Manager
+except ImportError:
+    def Manager():
+        pass
+
+
+def run():
+    cast()
+    return Manager()
+""",
+        }
+    )
+    targets = {e.dst for e in edges_of_kind(parse_repo(repo), "calls") if e.src == "use.py::run"}
+    assert targets == {"use.py::Manager"}
+
+
+def test_absolute_import_resolves_under_src_layout(make_repo):
+    repo = make_repo(
+        {
+            "src/mylib/__init__.py": "",
+            "src/mylib/core.py": "def run():\n    pass\n",
+            "scripts/main.py": "import mylib.core\n",
+        }
+    )
+    imports = edges_of_kind(parse_repo(repo), "imports")
+    assert any(e.src == "scripts/main.py" and e.dst == "src/mylib/core.py" for e in imports)
+
+
+def test_mixed_language_repo_keeps_languages_apart(make_repo):
+    """A Python `helper()` must not resolve to a TypeScript `helper`, and
+    both languages' files land in one graph."""
+    repo = make_repo(
+        {
+            "backend/app.py": "def main():\n    return helper()\n",
+            "frontend/util.ts": "export function helper() {}\n",
+        }
+    )
+    result = parse_repo(repo)
+    assert {n.language for n in result.nodes.values()} == {"python", "typescript"}
+    assert not edges_of_kind(result, "calls")
+
+
+def test_dependency_and_hidden_directories_are_skipped(make_repo):
+    repo = make_repo(
+        {
+            "app.py": "def f():\n    pass\n",
+            "node_modules/lib/index.js": "function g() {}\n",
+            ".venv/site.py": "def h():\n    pass\n",
+            "web/app.test.ts": "function t() {}\n",
+        }
+    )
+    assert {n.file for n in parse_repo(repo).nodes.values()} == {"app.py"}
+
+
+def test_repeated_calls_produce_one_edge(make_repo):
+    repo = make_repo({"a.py": "def f():\n    pass\n\n\ndef g():\n    f()\n    f()\n"})
+    calls = [e for e in edges_of_kind(parse_repo(repo), "calls") if e.src == "a.py::g"]
+    assert len(calls) == 1

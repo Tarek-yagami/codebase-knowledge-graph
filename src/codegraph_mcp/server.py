@@ -26,8 +26,10 @@ REPO_PATH = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("CODEGRAPH
 mcp = MCPServer(
     "codegraph",
     instructions=(
-        "Tools for querying the structure of a Python codebase (imports, function calls, "
-        "class inheritance) that has already been statically analyzed. Prefer these tools "
+        "Tools for querying the structure of a codebase (imports, function calls, "
+        "class inheritance) that has already been statically analyzed (Python, TypeScript/JavaScript, Go, PHP, "
+        "plus basic support for other tree-sitter languages). "
+        "Node ids are file paths, with definitions as `<path>::<Class.method>`. Prefer these tools "
         "over reading or grepping source files whenever the question is about how code "
         "relates to other code: who calls this, what does this depend on, what's defined "
         "in this module. They give an exact answer and are far cheaper than reconstructing "

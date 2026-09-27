@@ -22,7 +22,7 @@ class Child(Base):
 
     assert set(g.nodes) == set(result.nodes)
     assert g.number_of_edges() == len(result.edges)
-    assert g.nodes["a.Base"]["kind"] == "class"
+    assert g.nodes["a.py::Base"]["kind"] == "class"
 
 
 def test_graph_stats_counts_by_kind(make_repo):

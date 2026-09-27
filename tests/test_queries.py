@@ -53,7 +53,7 @@ def build(make_repo):
 def test_list_modules(make_repo):
     g = build(make_repo)
     names = {m["id"] for m in queries.list_modules(g)}
-    assert names == {"auth", "sessions"}
+    assert names == {"auth.py", "sessions.py"}
 
 
 def test_get_node_returns_error_for_unknown_id(make_repo):
@@ -63,21 +63,21 @@ def test_get_node_returns_error_for_unknown_id(make_repo):
 
 def test_get_node_returns_real_data(make_repo):
     g = build(make_repo)
-    node = queries.get_node(g, "auth.HTTPBasicAuth")
+    node = queries.get_node(g, "auth.py::HTTPBasicAuth")
     assert node["kind"] == "class"
     assert "Attaches HTTP Basic" in node["docstring"]
 
 
 def test_list_children_returns_methods(make_repo):
     g = build(make_repo)
-    children = {c["name"] for c in queries.list_children(g, "auth.HTTPBasicAuth")}
+    children = {c["name"] for c in queries.list_children(g, "auth.py::HTTPBasicAuth")}
     assert children == {"__init__", "__call__"}
 
 
 def test_get_relationships_excludes_defines_and_similar_to(make_repo):
     g = build(make_repo)
-    g.add_edge("sessions.Session.get", "sessions.Session.request", kind="similar_to")
-    rel = queries.get_relationships(g, "sessions.Session.get")
+    g.add_edge("sessions.py::Session.get", "sessions.py::Session.request", kind="similar_to")
+    rel = queries.get_relationships(g, "sessions.py::Session.get")
     kinds = {d["kind"] for d in rel["depends_on"]}
     assert "similar_to" not in kinds
     assert "calls" in kinds
@@ -92,7 +92,7 @@ def test_search_nodes_ranks_exact_name_above_docstring_match(make_repo):
     g = build(make_repo)
     results = queries.search_nodes(g, "request")
     assert results[0]["matched_on"] == "exact name"
-    assert results[0]["id"] == "sessions.Session.request"
+    assert results[0]["id"] == "sessions.py::Session.request"
 
 
 def test_search_nodes_caps_at_25(make_repo):
@@ -106,7 +106,7 @@ def test_find_by_name_exact_match_only(make_repo):
     g = build(make_repo)
     results = queries.find_by_name(g, "__call__")
     names = {r["id"] for r in results}
-    assert names == {"auth.AuthBase.__call__", "auth.HTTPBasicAuth.__call__", "auth.HTTPProxyAuth.__call__"}
+    assert names == {"auth.py::AuthBase.__call__", "auth.py::HTTPBasicAuth.__call__", "auth.py::HTTPProxyAuth.__call__"}
 
 
 def test_find_by_name_no_match(make_repo):
@@ -127,10 +127,10 @@ def test_impact_of_changes_finds_direct_and_transitive_callers(make_repo):
 
     changed_ids = {n["id"] for n in result["changed_nodes"]}
     impacted_ids = {n["id"] for n in result["impacted_nodes"]}
-    assert changed_ids == {"core", "core.target"}
-    assert "mid.caller" in impacted_ids
-    assert "outer.entrypoint" in impacted_ids
-    assert "unrelated.standalone" not in impacted_ids
+    assert changed_ids == {"core.py", "core.py::target"}
+    assert "mid.py::caller" in impacted_ids
+    assert "outer.py::entrypoint" in impacted_ids
+    assert "unrelated.py::standalone" not in impacted_ids
 
 
 def test_impact_of_changes_no_changed_nodes_in_file(make_repo):
@@ -150,7 +150,7 @@ def test_suggested_reading_order_puts_dependencies_before_dependents(make_repo):
 
     order = [n["id"] for n in queries.suggested_reading_order(g)]
 
-    assert order.index("core") < order.index("mid") < order.index("outer")
+    assert order.index("core.py") < order.index("mid.py") < order.index("outer.py")
 
 
 def test_suggested_reading_order_handles_import_cycles(make_repo):
@@ -162,7 +162,7 @@ def test_suggested_reading_order_handles_import_cycles(make_repo):
 
     order = [n["id"] for n in queries.suggested_reading_order(g)]
 
-    assert set(order) == {"a", "b"}
+    assert set(order) == {"a.py", "b.py"}
 
 
 def test_rank_by_similarity_orders_by_score():

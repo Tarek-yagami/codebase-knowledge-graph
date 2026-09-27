@@ -2,6 +2,28 @@
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Multi-language support. Full support (definitions, imports, calls, inheritance) for Python, TypeScript/JavaScript, Go and PHP, and basic support (definitions and calls) for any other language tree-sitter-language-pack has a tags query for, including Java, Rust, Ruby and C/C++.
+- Mixed-language repos parse into one graph, with name resolution kept within each language.
+- Calls now resolve through import aliases (`from .a import f as g`, `import * as ns`, `pkg.F()` in Go) and to functions nested in the caller.
+- Dependency, hidden and test directories and files (`node_modules`, `.venv`, `*_test.go`, `*.spec.ts`, ...) are skipped during the walk.
+- Full PHP support, built around Laravel: namespaces and `use` imports resolved through composer.json PSR-4, inheritance and traits, `$this->`, `self::`, `parent::` and static calls, and route files linked to the controller methods they register. Blade templates are skipped.
+- React: rendering a component in JSX counts as a call to it, and `forwardRef`/`memo`-wrapped components are recognized.
+- Next.js: imports through `tsconfig.json`/`jsconfig.json` `paths` and `baseUrl` aliases resolve, including inherited configs.
+- The 3D viewer shows each node's language.
+
+### Changed
+- Node ids are now file-path based (`pkg/models.py::User.save`) instead of dotted Python paths, so they stay unique across languages.
+
+### Fixed
+- A function calling the same target several times produced one edge per call site.
+- Nested functions were attached to the enclosing class or module instead of the function that defines them.
+- Bare calls to builtins like `set()` or `next()` could resolve to an unrelated method with the same name.
+- A name imported from outside the repo could resolve to a same-named definition inside it.
+- Absolute Python imports now resolve under a `src/` layout.
+
 ## [0.1.0] - 2026-09-02
 
 First real release. Everything below was built and verified against real codebases (`requests`, Django's core package), not just written.

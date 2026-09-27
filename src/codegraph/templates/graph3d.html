@@ -339,14 +339,14 @@ function resetToOverview() {
 function updateToolbar(nodeCount) {
   document.getElementById('btn-back').disabled = scopeStack.length === 0;
   document.getElementById('btn-reset').disabled = scopeStack.length === 0;
-  const crumbs = ['overview', ...scopeStack.map(id => allNodes.get(id).name.split('.').pop())];
+  const crumbs = ['overview', ...scopeStack.map(id => allNodes.get(id).name.split('/').pop())];
   document.getElementById('status').textContent = `${crumbs.join(' / ')} · ${nodeCount} shown`;
 }
 updateToolbar(Graph.graphData().nodes.length);
 
 function showPanel(n) {
   document.getElementById('panel').style.display = 'block';
-  document.getElementById('p-kind').textContent = n.kind;
+  document.getElementById('p-kind').textContent = n.language ? `${n.kind} · ${n.language}` : n.kind;
   document.getElementById('p-name').textContent = n.name;
   document.getElementById('p-file').textContent = n.file + ':' + n.lineno;
   document.getElementById('p-doc').textContent = n.docstring || '';

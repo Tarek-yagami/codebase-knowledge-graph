@@ -15,10 +15,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install test dependencies
-        # networkx + numpy + pytest only - the test suite doesn't touch
-        # embeddings.py's actual model, so there's no need to pull in
-        # sentence-transformers/torch here.
-        run: pip install networkx numpy pytest
+        # The test suite doesn't touch embeddings.py's actual model, so
+        # there's no need to pull in sentence-transformers/torch here.
+        # Grammars download on first use, which the runner has network for.
+        run: pip install networkx numpy tree-sitter-language-pack json5 pytest
 
       - name: Run tests
         run: pytest
@@ -43,7 +43,7 @@ jobs:
           python-version: "3.11"
       # ignore_missing_imports covers mcp/sentence-transformers, no need to
       # install the heavy ones just to typecheck our own code against them
-      - run: pip install networkx numpy mypy
+      - run: pip install networkx numpy tree-sitter-language-pack json5 mypy
       - run: mypy
 
   docker-build:
