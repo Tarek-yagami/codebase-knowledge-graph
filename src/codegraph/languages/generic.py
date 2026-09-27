@@ -13,7 +13,7 @@ from functools import cache
 
 import tree_sitter_language_pack as tslp
 from tree_sitter import Node as SyntaxNode
-from tree_sitter import Query, QueryCursor
+from tree_sitter import Query, QueryCursor, Tree
 
 from codegraph.languages import treesitter as ts
 from codegraph.languages.base import FileFacts, Language, Ref
@@ -26,14 +26,14 @@ _RECEIVER_FIELDS = ("object", "receiver", "scope", "operand", "value", "argument
 _CALL_TAGS = ("reference.call", "reference.send")  # C#'s query calls them sends
 # A function declared without a body (a C prototype) isn't a definition.
 _PROTOTYPES = {"declaration", "field_declaration"}
-_CALL_NODE_TYPES = {
+_CALL_NODE_TYPES = (
     "call_expression",
     "call",
     "function_call",
     "function_call_expression",
     "method_invocation",
     "invocation_expression",
-}
+)
 
 
 @cache
@@ -87,6 +87,9 @@ class _FileWalker:
             while stack and stack[-1][0].end_byte < syntax.end_byte:
                 stack.pop()
             owner = _impl_owner(syntax) if not stack and kind == "function" else None
+            if kind == "function" and "::" in name:  # an out-of-class definition, C++'s `void A::f()`
+                owner, name = name.rsplit("::", 1)
+                owner = owner.rsplit("::", 1)[-1]
             if owner is not None:
                 # The type may be declared in another file, so parser.py attaches it.
                 qual = f"{owner}.{name}"
@@ -218,9 +221,10 @@ def _declared_names(declaration: SyntaxNode) -> list[str]:
     targets = [declaration.child_by_field_name(f) for f in ("name", "pattern", "declarator")]
     targets += [c for c in declaration.named_children if c.type == "variable_declarator"]
     for target in targets:
-        # Declarators nest (`*p = x` is init -> pointer -> identifier); the name is at the bottom.
-        while target is not None and target.child_by_field_name("declarator") is not None:
-            target = target.child_by_field_name("declarator")
+        # Declarators nest (`*p = x` is init -> pointer -> identifier, `&f` is
+        # reference -> identifier); the name is at the bottom.
+        while target is not None and target.type.endswith("declarator") and target.type != "variable_declarator":
+            target = target.child_by_field_name("declarator") or next(iter(target.named_children), None)
         if target is not None and target.type == "variable_declarator":
             target = target.child_by_field_name("name") or next(iter(target.named_children), None)
         if target is not None and "identifier" in target.type and target.type != "type_identifier":
@@ -250,14 +254,12 @@ def _tagged_call(call: SyntaxNode, name: SyntaxNode) -> tuple[SyntaxNode, str, s
     return call, ts.text(name), ts.text(receiver) if receiver is not None else None
 
 
-def _structural_calls(root: SyntaxNode) -> list[tuple[SyntaxNode, str, str | None]]:
+def _structural_calls(tree: Tree) -> list[tuple[SyntaxNode, str, str | None]]:
     """Calls found by node shape: the callee is a bare identifier, or a member
     access whose first child is the receiver and whose last identifier is
     the method."""
     calls: list[tuple[SyntaxNode, str, str | None]] = []
-    for n in ts.descendants(root):
-        if n.type not in _CALL_NODE_TYPES:
-            continue
+    for n in ts.find(tree, _CALL_NODE_TYPES):
         callee = n.child_by_field_name("function") or (n.named_children[0] if n.named_children else None)
         if callee is None:
             continue
@@ -279,14 +281,19 @@ class GenericLanguage(Language):
         self.grammars = (grammar,)
 
     def extract(self, source: bytes, rel_file: str) -> FileFacts:
-        tree = ts.parse(self.grammar, source)
+        return self.extract_with(self.grammar, self.name, source, rel_file)
+
+    def extract_with(self, grammar: str, language: str, source: bytes, rel_file: str) -> FileFacts:
+        """Extracts with a given grammar, labeling nodes with language; for a
+        subclass covering several grammars, like C and C++."""
+        tree = ts.parse(grammar, source)
         facts = FileFacts(module_id=rel_file)
-        facts.nodes[rel_file] = ts.module_node(rel_file, self.name, tree)
+        facts.nodes[rel_file] = ts.module_node(rel_file, language, tree)
 
         definitions: list[tuple[SyntaxNode, str, str]] = []  # (syntax node, kind, name)
         calls: list[tuple[SyntaxNode, str, str | None]] = []  # (call node, name, receiver text)
         implementations: list[tuple[SyntaxNode, str]] = []  # (node, base name)
-        query = tags_query(self.grammar)
+        query = tags_query(grammar)
         assert query is not None  # languages.language_for only hands out languages that have one
         for _, captures in QueryCursor(query).matches(tree.root_node):
             names = captures.get("name")
@@ -307,14 +314,20 @@ class GenericLanguage(Language):
         # calls, Rust no `Type::new()`, Swift none), so calls found by node
         # shape fill in the rest.
         tagged = {call.id for call, _, _ in calls}
-        calls += [c for c in _structural_calls(tree.root_node) if c[0].id not in tagged]
+        calls += [c for c in _structural_calls(tree) if c[0].id not in tagged]
 
-        walker = _FileWalker(facts, self.name)
-        walker.add_definitions(definitions)
+        walker = _FileWalker(facts, language)
+        walker.add_definitions(self.definitions(tree, definitions))
         walker.add_bases(implementations)
         walker.add_calls(calls)
-        self.scan_module(tree.root_node, facts, walker.defined)
+        self.scan_module(tree, facts, walker.defined)
         return facts
+
+    def definitions(self, tree: Tree, tagged: list[tuple[SyntaxNode, str, str]]) -> list[tuple[SyntaxNode, str, str]]:
+        """Hook for a language whose tags query misses definitions: returns
+        (syntax node, kind, name) for every definition, given the tagged ones.
+        A name like `A::f` defines f as a method of A."""
+        return tagged
 
     @staticmethod
     def attach_imports(facts: FileFacts, imports: dict[str, str]) -> None:
@@ -326,7 +339,7 @@ class GenericLanguage(Language):
             elif ref.receiver is None and ref.via_import is None and ref.name in imports:
                 ref.via_import = imports[ref.name]
 
-    def scan_module(self, root: SyntaxNode, facts: FileFacts, defined: dict[tuple[int, int], tuple[str, str]]) -> None:
+    def scan_module(self, tree: Tree, facts: FileFacts, defined: dict[tuple[int, int], tuple[str, str]]) -> None:
         """Hook for a language that builds on this one to add what tags
         queries don't mark, like imports and packages. defined maps each
         definition's byte span to its (node id, kind)."""

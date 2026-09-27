@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from tree_sitter import Node as SyntaxNode
+from tree_sitter import Tree
 
 from codegraph.languages import treesitter as ts
 from codegraph.languages.base import FileFacts, Ref, RepoIndex
@@ -67,7 +68,8 @@ class RustLanguage(GenericLanguage):
     def __init__(self) -> None:
         super().__init__("rust")
 
-    def scan_module(self, root: SyntaxNode, facts: FileFacts, defined: dict[tuple[int, int], tuple[str, str]]) -> None:
+    def scan_module(self, tree: Tree, facts: FileFacts, defined: dict[tuple[int, int], tuple[str, str]]) -> None:
+        root = tree.root_node
         imports: dict[str, str] = {}  # local name -> use path
         impls = []
         for item in root.named_children:

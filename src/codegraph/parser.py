@@ -206,7 +206,7 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = DEFAULT_EXCLUDE) -> ParseR
     for facts in facts_list:
         for ref in facts.bases:
             base = resolver.pick(ref, resolver.classes)
-            if base and base != ref.src:
+            if base and base != ref.src and base not in resolver.bases_of.get(ref.src, []):
                 result.edges.append(Edge(ref.src, base, "inherits"))
                 resolver.bases_of.setdefault(ref.src, []).append(base)
             else:

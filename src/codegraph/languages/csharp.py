@@ -6,7 +6,7 @@ and files in the same namespace see each other without any `using`.
 
 from __future__ import annotations
 
-from tree_sitter import Node as SyntaxNode
+from tree_sitter import Tree
 
 from codegraph.languages import treesitter as ts
 from codegraph.languages.base import FileFacts, RepoIndex
@@ -21,10 +21,10 @@ class CSharpLanguage(GenericLanguage):
     def __init__(self) -> None:
         super().__init__("csharp")
 
-    def scan_module(self, root: SyntaxNode, facts: FileFacts, defined: dict[tuple[int, int], tuple[str, str]]) -> None:
-        namespace = next((n for n in ts.descendants(root) if n.type in _NAMESPACES), None)
+    def scan_module(self, tree: Tree, facts: FileFacts, defined: dict[tuple[int, int], tuple[str, str]]) -> None:
+        namespace = next(iter(ts.find(tree, _NAMESPACES)), None)
         facts.package = ts.text(namespace.child_by_field_name("name")) if namespace is not None else ""
-        for using in (n for n in ts.descendants(root) if n.type == "using_directive"):
+        for using in ts.find(tree, ("using_directive",)):
             if using.child_by_field_name("name") is not None:
                 continue  # `using M = A.B.C;` aliases one type, rarely enough to skip
             target = next((c for c in using.named_children if c.type in ("qualified_name", "identifier")), None)

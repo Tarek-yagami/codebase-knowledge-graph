@@ -11,8 +11,8 @@ from collections.abc import Iterator
 from functools import cache
 
 import tree_sitter_language_pack as tslp
+from tree_sitter import Language, Parser, Query, QueryCursor, Tree
 from tree_sitter import Node as SyntaxNode
-from tree_sitter import Parser, Tree
 
 from codegraph.languages.base import FileFacts
 from codegraph.model import Edge, Node, member_id
@@ -45,6 +45,23 @@ def descendants(node: SyntaxNode | None, prune: frozenset[str] = frozenset()) ->
             continue
         yield n
         stack.extend(n.named_children)
+
+
+@cache
+def _type_query(language: Language, types: tuple[str, ...]) -> Query | None:
+    known = [t for t in types if language.id_for_node_kind(t, True)]
+    return Query(language, " ".join(f"({t}) @node" for t in known)) if known else None
+
+
+def find(tree: Tree, types: tuple[str, ...], root: SyntaxNode | None = None) -> list[SyntaxNode]:
+    """Every node of the given types in tree (or under root), in document
+    order. Runs in tree-sitter's C query engine, far faster than walking the
+    tree in Python. Types the grammar doesn't have are ignored."""
+    query = _type_query(tree.language, types)
+    if query is None:
+        return []
+    nodes = QueryCursor(query).captures(root if root is not None else tree.root_node).get("node", [])
+    return sorted(nodes, key=lambda n: n.start_byte)
 
 
 def text(node: SyntaxNode | None) -> str:

@@ -11,6 +11,7 @@ from functools import cache
 import tree_sitter_language_pack as tslp
 
 from codegraph.languages.base import Language
+from codegraph.languages.cfamily import CFamilyLanguage
 from codegraph.languages.csharp import CSharpLanguage
 from codegraph.languages.generic import GenericLanguage, tags_query
 from codegraph.languages.go import GoLanguage
@@ -32,6 +33,7 @@ _DEDICATED_LANGUAGES: tuple[Language, ...] = (
     CSharpLanguage(),
     KotlinLanguage(),
     RustLanguage(),
+    CFamilyLanguage(),
     PhpLanguage(),
 )
 _DEDICATED = {ext: lang for lang in _DEDICATED_LANGUAGES for ext in lang.extensions}
