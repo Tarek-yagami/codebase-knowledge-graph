@@ -48,6 +48,12 @@ class FileFacts:
     # (method id, owning type name) for methods declared apart from their
     # type, like Go methods, whose type may live in another file.
     owners: list[tuple[str, str]] = field(default_factory=list)
+    # The package the file belongs to (Java/Kotlin package, C# namespace, Go
+    # directory). Files in one package see each other's names without importing.
+    package: str | None = None
+    # Imports that bring a whole namespace into scope rather than one name:
+    # `import a.b.*`, C#'s `using A.B;`, Rust's `use a::*`.
+    open_imports: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -55,15 +61,19 @@ class RepoIndex:
     root: Path
     modules: set[str]
     by_dir: dict[str, list[str]]
+    packages: dict[str, list[str]]  # package name -> module ids declaring it
     # Per-language lookup tables built lazily on first resolve_import call.
     cache: dict = field(default_factory=dict)
 
     @classmethod
-    def build(cls, root: Path, module_ids: list[str]) -> RepoIndex:
+    def build(cls, root: Path, facts: list[FileFacts]) -> RepoIndex:
         by_dir: dict[str, list[str]] = {}
-        for m in module_ids:
-            by_dir.setdefault(posixpath.dirname(m), []).append(m)
-        return cls(root, set(module_ids), by_dir)
+        packages: dict[str, list[str]] = {}
+        for f in facts:
+            by_dir.setdefault(posixpath.dirname(f.module_id), []).append(f.module_id)
+            if f.package is not None:
+                packages.setdefault(f.package, []).append(f.module_id)
+        return cls(root, {f.module_id for f in facts}, by_dir, packages)
 
     def nearest_config(
         self, directory: str, filenames: tuple[str, ...], parse: Callable[[Path], T | None]
@@ -91,8 +101,6 @@ class Language(ABC):
     name: str
     extensions: tuple[str, ...] = ()  # file extensions a dedicated extractor claims
     grammars: tuple[str, ...] = ()  # tree-sitter grammar names it covers, so the fallback skips them
-    # Go: every file in a directory is one package and shares its namespace.
-    directory_is_scope = False
 
     @abstractmethod
     def extract(self, source: bytes, rel_file: str) -> FileFacts:

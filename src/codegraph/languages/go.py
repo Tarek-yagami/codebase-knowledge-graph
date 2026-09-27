@@ -155,11 +155,11 @@ class GoLanguage(Language):
     name = "go"
     extensions = (".go",)
     grammars = ("go",)
-    directory_is_scope = True
 
     def extract(self, source: bytes, rel_file: str) -> FileFacts:
         tree = ts.parse("go", source)
-        facts = FileFacts(module_id=rel_file)
+        # A Go package is a directory: its files share one namespace.
+        facts = FileFacts(module_id=rel_file, package=posixpath.dirname(rel_file))
         facts.nodes[rel_file] = ts.module_node(rel_file, "go", tree)
         walker = _Walker(facts, tree.root_node)
         walker.visit(tree.root_node)

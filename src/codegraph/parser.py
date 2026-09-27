@@ -7,7 +7,6 @@ whole repo here, with the same confidence rules for every language.
 from __future__ import annotations
 
 import os
-import posixpath
 import re
 import sys
 from collections import deque
@@ -68,10 +67,15 @@ def _extract_all(root: Path, files: list[tuple[str, Language]]) -> tuple[list[Fi
 
 
 class _Resolver:
-    def __init__(self, nodes: dict[str, Node], language_of: dict[str, Language], index: RepoIndex):
+    def __init__(
+        self, nodes: dict[str, Node], language_of: dict[str, Language], index: RepoIndex, facts: list[FileFacts]
+    ):
         self.nodes = nodes
         self.language_of = language_of
         self.index = index
+        self.package_of = {f.module_id: f.package for f in facts if f.package is not None}
+        self._open_specs = {f.module_id: f.open_imports for f in facts if f.open_imports}
+        self._open_modules: dict[str, set[str]] = {}
         self.parent: dict[str, str] = {}
         self.members: dict[str, dict[str, str]] = {}  # class id -> method name -> method id
         self.bases_of: dict[str, list[str]] = {}
@@ -89,11 +93,12 @@ class _Resolver:
         elif parent.kind == "class" and child.kind == "function":
             self.members.setdefault(parent.id, {})[child.name] = child.id
 
-    def pick(self, ref: Ref, pool: dict[tuple[str, str], list[str]], loose: bool = False) -> str | None:
+    def pick(self, ref: Ref, pool: dict[tuple[str, str], list[str]]) -> str | None:
         """Resolves ref.name within pool, most specific scope first: the
-        module it was imported from, the same file, the same package
-        directory (Go), then the repo. A name that's ambiguous at the first
-        scope where it appears stays unresolved, unless loose is set."""
+        module it was imported from, the same file, the same package, the
+        namespaces the file opens with wildcard imports, then the repo. A
+        name that's ambiguous at the first scope where it appears stays
+        unresolved."""
         file = self.nodes[ref.src].file
         language = self.language_of[file]
         candidates = pool.get((language.name, ref.name), [])
@@ -108,17 +113,28 @@ class _Resolver:
                         return c
             # The module is ours but doesn't define the name itself, e.g. a re-export.
         scopes = [lambda c: self.nodes[c].file == file]
-        if language.directory_is_scope:
-            directory = posixpath.dirname(file)
-            scopes.append(lambda c: posixpath.dirname(self.nodes[c].file) == directory)
+        package = self.package_of.get(file)
+        if package is not None:
+            scopes.append(lambda c: self.package_of.get(self.nodes[c].file) == package)
+        opened = self.open_modules(file)
+        if opened:
+            scopes.append(lambda c: self.nodes[c].file in opened)
         scopes.append(lambda c: True)
         for in_scope in scopes:
             local = [c for c in candidates if in_scope(c)]
-            if len(local) == 1 or (local and loose):
+            if len(local) == 1:
                 return local[0]
             if local:
                 return None
         return None
+
+    def open_modules(self, file: str) -> set[str]:
+        """Every module brought into scope by the file's wildcard imports."""
+        if file not in self._open_modules:
+            language = self.language_of[file]
+            specs = self._open_specs.get(file, [])
+            self._open_modules[file] = {m for s in specs for m in language.resolve_import(s, file, self.index)}
+        return self._open_modules[file]
 
     def lexical(self, ref: Ref) -> str | None:
         """A bare name defined in an enclosing function, like a closure
@@ -169,8 +185,8 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = DEFAULT_EXCLUDE) -> ParseR
     result = ParseResult()
     for facts in facts_list:
         result.nodes.update(facts.nodes)
-    index = RepoIndex.build(root, [f.module_id for f in facts_list])
-    resolver = _Resolver(result.nodes, language_of, index)
+    index = RepoIndex.build(root, facts_list)
+    resolver = _Resolver(result.nodes, language_of, index, facts_list)
 
     defines = [e for f in facts_list for e in f.defines]
     for edge in defines:
@@ -185,11 +201,11 @@ def parse_repo(root: Path, exclude: tuple[str, ...] = DEFAULT_EXCLUDE) -> ParseR
             defines.append(edge)
     result.edges.extend(defines)
 
-    # Inheritance is resolved loosely: base-class name collisions are much
-    # rarer in practice than call-site ones.
+    # Base classes follow the same scope rules as calls: guessing among
+    # same-named classes linked std traits like `Error` to unrelated types.
     for facts in facts_list:
         for ref in facts.bases:
-            base = resolver.pick(ref, resolver.classes, loose=True)
+            base = resolver.pick(ref, resolver.classes)
             if base and base != ref.src:
                 result.edges.append(Edge(ref.src, base, "inherits"))
                 resolver.bases_of.setdefault(ref.src, []).append(base)
