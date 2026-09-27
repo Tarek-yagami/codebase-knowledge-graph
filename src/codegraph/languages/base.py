@@ -54,6 +54,9 @@ class FileFacts:
     # Imports that bring a whole namespace into scope rather than one name:
     # `import a.b.*`, C#'s `using A.B;`, Rust's `use a::*`.
     open_imports: list[str] = field(default_factory=list)
+    # Imports whose names this module passes on to its own importers: TS's
+    # `export * from "./x"`, Python's `from .x import A` in a package's __init__.
+    reexports: list[str] = field(default_factory=list)
 
 
 @dataclass

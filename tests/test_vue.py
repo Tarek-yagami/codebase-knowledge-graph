@@ -72,3 +72,39 @@ def test_template_links_children_handlers_and_setup_calls(make_repo):
     }
     # Sibling functions in <script setup> resolve to each other.
     assert (f"{component}.onPlay", f"{component}.reload") in edges(result, "calls")
+
+
+def test_options_api_methods_and_this_calls(make_repo):
+    repo = make_repo(
+        {
+            "Player.vue": """<template>
+  <button @click="play">Play</button>
+</template>
+
+<script>
+export default {
+  data() { return { playing: false } },
+  mounted() { this.reset() },
+  methods: {
+    play() { this.reset(); this.log() },
+    reset() {},
+    log: function () {},
+  },
+}
+</script>
+"""
+        }
+    )
+    result = parse_repo(repo)
+    component = "Player.vue::Player"
+    assert {dst for src, dst in edges(result, "defines") if src == component} == {
+        f"{component}.data",
+        f"{component}.mounted",
+        f"{component}.play",
+        f"{component}.reset",
+        f"{component}.log",
+    }
+    calls = edges(result, "calls")
+    assert (component, f"{component}.play") in calls  # @click="play"
+    assert (f"{component}.mounted", f"{component}.reset") in calls
+    assert {dst for src, dst in calls if src == f"{component}.play"} == {f"{component}.reset", f"{component}.log"}

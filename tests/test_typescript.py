@@ -141,3 +141,23 @@ export default function Page() { cn() }
 def test_arrow_function_with_expression_body_records_its_call(make_repo):
     repo = make_repo({"a.ts": "function g() {}\nconst f = () => g()\n"})
     assert ("a.ts::f", "a.ts::g") in edges(parse_repo(repo), "calls")
+
+
+def test_workspace_packages_and_barrel_reexports(make_repo):
+    """A monorepo importing its own package by name, through an `exports`
+    map whose built targets aren't in the repo, and a name that's only
+    reachable through an `export *` barrel. The same name in another
+    package must not be picked instead."""
+    repo = make_repo(
+        {
+            "packages/core/package.json": """{"name": "@acme/core", "exports": {
+                "./v2": {"source": "./src/v2/index.ts", "import": "./dist/v2/index.js"}}}""",
+            "packages/core/src/v2/index.ts": 'export * from "./schemas"\n',
+            "packages/core/src/v2/schemas.ts": "export function string() {}\n",
+            "packages/legacy/src/schemas.ts": "export function string() {}\n",
+            "apps/web/main.ts": 'import { string } from "@acme/core/v2"\n\nfunction build() { string() }\n',
+        }
+    )
+    result = parse_repo(repo)
+    assert ("apps/web/main.ts", "packages/core/src/v2/index.ts") in edges(result, "imports")
+    assert ("apps/web/main.ts::build", "packages/core/src/v2/schemas.ts::string") in edges(result, "calls")

@@ -5,6 +5,7 @@ project routinely imports plain JS files.
 
 from __future__ import annotations
 
+import json
 import os
 import posixpath
 from dataclasses import dataclass
@@ -39,6 +40,7 @@ _OWN_NODE_TYPES = frozenset(_FUNCTION_DECLS | {"class_declaration", "abstract_cl
 class _Imports:
     def __init__(self, root: SyntaxNode):
         self.specs: list[str] = []
+        self.reexports: list[str] = []  # `export ... from "x"`
         self.symbols: dict[str, tuple[str, str]] = {}  # local name -> (spec, exported name)
         self.namespaces: dict[str, str] = {}  # `import * as ns` / `const ns = require(...)`
         for node in root.named_children:
@@ -48,6 +50,8 @@ class _Imports:
                 self.specs.append(spec)
                 if node.type == "import_statement":
                     self._bind(node, spec)
+                else:
+                    self.reexports.append(spec)
             elif node.type in ("lexical_declaration", "variable_declaration"):
                 for decl in node.named_children:
                     required = _require_spec(decl.child_by_field_name("value"))
@@ -159,6 +163,11 @@ class ScriptWalker:
                     self._class(value, name, anchor, scope)
         elif t == "method_definition":
             self._function(node, node.child_by_field_name("name"), node, anchor, scope, class_id)
+        elif t == "pair":  # `save: function () {...}` or `save: () => ...` in an object literal
+            value = node.child_by_field_name("value")
+            key = node.child_by_field_name("key")
+            if value is not None and value.type in _FUNCTION_VALUES and key is not None:
+                self._function(value, key, node, anchor, scope, class_id)
         elif t in ("public_field_definition", "field_definition"):
             value = node.child_by_field_name("value")
             if value is not None and value.type in _FUNCTION_VALUES:
@@ -256,6 +265,7 @@ def walk_script(facts: FileFacts, tree: Tree, language: str, scope: tuple[str, s
     whose `<script>` blocks are plain TypeScript/JavaScript."""
     imports = _Imports(tree.root_node)
     facts.imports.extend(imports.specs)
+    facts.reexports.extend(imports.reexports)
     walker = ScriptWalker(facts, language, imports)
     walker.visit(tree.root_node, scope, None)
     return walker
@@ -277,16 +287,19 @@ class TypeScriptLanguage(Language):
 
     def resolve_import(self, spec: str, from_file: str, index: RepoIndex) -> list[str]:
         """Relative specs, plus `paths`/`baseUrl` aliases from the nearest
-        tsconfig.json or jsconfig.json (Next.js's `@/components/...`). Any
-        other bare spec is an npm package."""
+        tsconfig.json or jsconfig.json (Next.js's `@/components/...`), plus
+        packages of the repo's own workspace (a monorepo importing
+        `zod/v4`). Any other bare spec is an npm package."""
         if spec.startswith("."):
             return _module_at(posixpath.join(posixpath.dirname(from_file), spec), index)
         found = index.nearest_config(
             posixpath.dirname(from_file), ("tsconfig.json", "jsconfig.json"), lambda p: _load_aliases(p, index.root)
         )
-        if found is None:
-            return []
-        aliases = found[1]
+        aliased = self._through_aliases(spec, found[1], index) if found is not None else []
+        return aliased or _workspace_module(spec, index)
+
+    @staticmethod
+    def _through_aliases(spec: str, aliases: _Aliases, index: RepoIndex) -> list[str]:
         for pattern, targets in aliases.paths.items():
             prefix, star, suffix = pattern.partition("*")
             if star and spec.startswith(prefix) and spec.endswith(suffix) and len(spec) >= len(prefix + suffix):
@@ -300,6 +313,60 @@ class TypeScriptLanguage(Language):
                 if hit:
                     return hit
         return _module_at(posixpath.join(aliases.base, spec), index) if aliases.has_base_url else []
+
+
+def _manifest(package_json: Path) -> dict | None:
+    try:
+        data = json.loads(package_json.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) and isinstance(data.get("name"), str) else None
+
+
+def _export_targets(entry: object) -> list[str]:
+    """Every path an `exports` entry can point to, across conditions
+    (`import`, `types`, a custom source condition...), in order."""
+    if isinstance(entry, str):
+        return [entry]
+    if isinstance(entry, dict):
+        return [t for value in entry.values() for t in _export_targets(value)]
+    if isinstance(entry, list):
+        return [t for value in entry for t in _export_targets(value)]
+    return []
+
+
+def _workspace_module(spec: str, index: RepoIndex) -> list[str]:
+    """A monorepo importing one of its own packages by name. The package's
+    `exports` (or `source`/`main`/...) usually point at build output that
+    isn't in the repo, so every target is tried and the first that's a real
+    source file wins, with `src/` as the conventional fallback."""
+    packages: dict[str, tuple[str, dict]] | None = index.cache.get("npm_workspace")
+    if packages is None:
+        packages = {}
+        for module in index.modules:
+            found = index.nearest_config(posixpath.dirname(module), ("package.json",), _manifest)
+            if found is not None:
+                packages.setdefault(found[1]["name"], found)
+        index.cache["npm_workspace"] = packages
+    parts = spec.split("/")
+    name_length = 2 if spec.startswith("@") else 1
+    name, subpath = "/".join(parts[:name_length]), "/".join(parts[name_length:])
+    if name not in packages:
+        return []
+    package_dir, manifest = packages[name]
+    exports = manifest.get("exports")
+    entry = exports.get(f"./{subpath}" if subpath else ".") if isinstance(exports, dict) else None
+    targets = _export_targets(entry) if subpath or entry is not None else []
+    if not subpath:
+        targets += [manifest[f] for f in ("source", "module", "main", "types") if isinstance(manifest.get(f), str)]
+        targets += ["src/index", "index"]
+    else:
+        targets += [f"src/{subpath}", subpath]
+    for target in targets:
+        hit = _module_at(posixpath.join(package_dir, target), index)
+        if hit:
+            return hit
+    return []
 
 
 @dataclass

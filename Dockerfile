@@ -8,7 +8,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir "networkx>=3.2" "tree-sitter-language-pack>=1.20" "json5>=0.9"
 # Bake in the grammars with dedicated extractors; any other language's grammar
 # downloads the first time a repo containing it is parsed.
-RUN python -c "import tree_sitter_language_pack as t; t.download(['typescript', 'tsx', 'javascript', 'go', 'php'])"
+RUN python -c "import tree_sitter_language_pack as t; t.download(['typescript', 'tsx', 'javascript', 'vue', 'go', 'php', 'java', 'kotlin', 'csharp', 'rust', 'c', 'cpp'])"
 
 COPY src/ src/
 COPY scripts/ scripts/

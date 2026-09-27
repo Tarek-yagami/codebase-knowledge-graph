@@ -76,6 +76,7 @@ class _Resolver:
         self.package_of = {f.module_id: f.package for f in facts if f.package is not None}
         self._open_specs = {f.module_id: f.open_imports for f in facts if f.open_imports}
         self._open_modules: dict[str, set[str]] = {}
+        self._reexports = {f.module_id: f.reexports for f in facts if f.reexports}
         self.parent: dict[str, str] = {}
         self.members: dict[str, dict[str, str]] = {}  # class id -> method name -> method id
         self.bases_of: dict[str, list[str]] = {}
@@ -90,7 +91,9 @@ class _Resolver:
             self.classes.setdefault(key, []).append(child.id)
         if parent.kind == "module":
             self.top_level.setdefault(key, []).append(child.id)
-        elif parent.kind == "class" and child.kind == "function":
+        elif child.kind == "function":
+            # A function's nested functions count as its members too, so a Vue
+            # component's `this.save()` finds the save method defined inside it.
             self.members.setdefault(parent.id, {})[child.name] = child.id
 
     def pick(self, ref: Ref, pool: dict[tuple[str, str], list[str]]) -> str | None:
@@ -106,8 +109,9 @@ class _Resolver:
             modules = language.resolve_import(ref.via_import, file, self.index)
             if not modules:
                 return None  # imported from outside the repo
-            # Looked up in each target module's own language: a .vue file imports .ts ones.
-            for m in modules:
+            # Looked up in each target module's own language (a .vue file imports
+            # .ts ones), then through what those modules re-export.
+            for m in self.reexport_closure(modules):
                 for c in pool.get((self.language_of[m].name, ref.name), []):
                     if self.nodes[c].file == m:
                         return c
@@ -127,6 +131,21 @@ class _Resolver:
             if local:
                 return None
         return None
+
+    def reexport_closure(self, modules: list[str]) -> list[str]:
+        """modules, then every module they re-export from, breadth-first, so
+        a name defined behind an `index.ts` barrel is found through it."""
+        seen = dict.fromkeys(modules)
+        queue = deque(modules)
+        while queue:
+            module = queue.popleft()
+            language = self.language_of[module]
+            for spec in self._reexports.get(module, []):
+                for target in language.resolve_import(spec, module, self.index):
+                    if target not in seen:
+                        seen[target] = None
+                        queue.append(target)
+        return list(seen)
 
     def open_modules(self, file: str) -> set[str]:
         """Every module brought into scope by the file's wildcard imports."""

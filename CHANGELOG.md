@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- Multi-language support. Full support (definitions, imports, calls, inheritance) for Python, TypeScript/JavaScript, Go and PHP, and basic support (definitions and calls) for any other language tree-sitter-language-pack has a tags query for, including Java, Rust, Ruby and C/C++.
+- Multi-language support. Full support (definitions, imports, calls, inheritance) for Python, TypeScript/JavaScript, Vue, Go, PHP, Java, Kotlin, C#, Rust, C and C++, and basic support (definitions, inheritance, calls) for any other language tree-sitter-language-pack has a tags query for, such as Ruby, Swift and Dart.
 - Mixed-language repos parse into one graph, with name resolution kept within each language.
 - Calls now resolve through import aliases (`from .a import f as g`, `import * as ns`, `pkg.F()` in Go) and to functions nested in the caller.
 - Dependency, hidden and test directories and files (`node_modules`, `.venv`, `*_test.go`, `*.spec.ts`, ...) are skipped during the walk.
@@ -14,10 +14,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Vue single-file components: `<script setup>` code is extracted under a component node, and the template links to child components and to the handlers it calls.
 - React: rendering a component in JSX counts as a call to it, and `forwardRef`/`memo`-wrapped components are recognized.
 - Next.js: imports through `tsconfig.json`/`jsconfig.json` `paths` and `baseUrl` aliases resolve, including inherited configs.
+- Calls on a variable resolve through its declared type (field, parameter or local) in the statically typed languages.
+- Package-level visibility (Go, Java, Kotlin, C#) and wildcard imports (`import a.b.*`, `using`, `use a::*`) are part of name resolution.
+- Names resolve through re-exports: TypeScript `export * from` barrels and Python package `__init__.py` imports.
+- TypeScript monorepos: imports of the repo's own workspace packages resolve through each package's `exports` to its source files.
+- Vue Options API components: methods, computed properties and hooks become the component's functions, and `this.x()` resolves to them.
 - The 3D viewer shows each node's language.
 
 ### Changed
 - Node ids are now file-path based (`pkg/models.py::User.save`) instead of dotted Python paths, so they stay unique across languages.
+- Requires Python 3.11+, for `tomllib` (Cargo.toml). Python 3.10 reaches end of life in October 2026.
+- Base classes no longer fall back to the first same-named class anywhere in the repo, which linked std traits like `Error` to unrelated types. They follow the same scope rules as calls.
 
 ### Fixed
 - An arrow function whose body is a single call (`() => g()`) didn't record that call.

@@ -19,6 +19,7 @@ from codegraph.languages.typescript import ScriptWalker, TypeScriptLanguage, gra
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_$][\w$]*$")
 _TAGS = ("start_tag", "self_closing_tag")
+_OPTION_GROUPS = {"methods", "computed", "watch"}
 
 
 def _masked_script(source: bytes, scripts: list[SyntaxNode]) -> bytes:
@@ -41,6 +42,21 @@ def _script_lang(script_element: SyntaxNode) -> str:
     return "js"
 
 
+def _options_objects(program: SyntaxNode) -> list[SyntaxNode]:
+    """The options object of `export default {...}` or `export default defineComponent({...})`."""
+    found = []
+    for statement in (c for c in program.named_children if c.type == "export_statement"):
+        value = statement.child_by_field_name("value") or next(
+            (c for c in statement.named_children if c.type in ("object", "call_expression")), None
+        )
+        if value is not None and value.type == "call_expression":
+            args = value.child_by_field_name("arguments")
+            value = args.named_children[0] if args is not None and args.named_children else None
+        if value is not None and value.type == "object":
+            found.append(value)
+    return found
+
+
 def _component_name(tag: str) -> str:
     """`song-list` and `SongList` both refer to the SongList component."""
     return "".join(part[:1].upper() + part[1:] for part in tag.split("-")) if "-" in tag else tag
@@ -55,9 +71,10 @@ class VueLanguage(Language):
         self._scripts = scripts
 
     def extract(self, source: bytes, rel_file: str) -> FileFacts:
-        document = ts.parse("vue", source).root_node
+        vue_tree = ts.parse("vue", source)
+        document = vue_tree.root_node
         facts = FileFacts(module_id=rel_file)
-        facts.nodes[rel_file] = ts.module_node(rel_file, "vue", ts.parse("vue", source))
+        facts.nodes[rel_file] = ts.module_node(rel_file, "vue", vue_tree)
         component = posixpath.splitext(posixpath.basename(rel_file))[0]
         component_id = ts.add_definition(facts, rel_file, component, "function", "vue", document)
 
@@ -69,12 +86,31 @@ class VueLanguage(Language):
             walker = walk_script(facts, tree, "vue", (component_id, component))
             # Top-level script code is the body of the component's setup function.
             walker.record_calls(component_id, tree.root_node, None)
+            for options in _options_objects(tree.root_node):
+                self._options_api(options, component_id, component, walker)
         else:
             walker = walk_script(facts, ts.parse(grammar, b""), "vue", (component_id, component))
 
         for template in (c for c in document.named_children if c.type == "template_element"):
             self._template(template, component_id, grammar, walker)
         return facts
+
+    @staticmethod
+    def _options_api(options: SyntaxNode, component_id: str, component: str, walker: ScriptWalker) -> None:
+        """Options API components (`export default { methods: {...} }`): hooks
+        like `mounted()` and everything under methods/computed/watch become
+        the component's functions. Vue puts them all on `this`, so a
+        `this.save()` call resolves against the component."""
+        scope = (component_id, component)
+        walker.visit(options, scope, component_id)
+        for pair in (c for c in options.named_children if c.type == "pair"):
+            value = pair.child_by_field_name("value")
+            if (
+                ts.text(pair.child_by_field_name("key")) in _OPTION_GROUPS
+                and value is not None
+                and value.type == "object"
+            ):
+                walker.visit(value, scope, component_id)
 
     def _template(self, template: SyntaxNode, component_id: str, grammar: str, walker: ScriptWalker) -> None:
         for tag in (n for n in ts.descendants(template) if n.type in _TAGS):

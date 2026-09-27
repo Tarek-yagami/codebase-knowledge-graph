@@ -210,6 +210,8 @@ class PythonLanguage(Language):
         )
         imports = _ImportMap(tree)
         facts.imports = imports.specs
+        # Anything a module imports by name can be imported from it in turn.
+        facts.reexports = list(dict.fromkeys(spec for spec, _ in imports.symbols.values()))
         _FileVisitor(facts, rel_file, lines, imports).visit(tree)
         return facts
 

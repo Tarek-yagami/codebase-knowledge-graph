@@ -316,3 +316,18 @@ def test_repeated_calls_produce_one_edge(make_repo):
     repo = make_repo({"a.py": "def f():\n    pass\n\n\ndef g():\n    f()\n    f()\n"})
     calls = [e for e in edges_of_kind(parse_repo(repo), "calls") if e.src == "a.py::g"]
     assert len(calls) == 1
+
+
+def test_name_reexported_by_package_init_resolves_to_its_definition(make_repo):
+    """`from .sessions import Session` in __init__ makes `from pkg import
+    Session` reach the class, even with another Session elsewhere."""
+    repo = make_repo(
+        {
+            "pkg/__init__.py": "from .sessions import Session\n",
+            "pkg/sessions.py": "class Session:\n    pass\n",
+            "other/sessions.py": "class Session:\n    pass\n",
+            "app.py": "from pkg import Session\n\n\ndef main():\n    return Session()\n",
+        }
+    )
+    calls = edges_of_kind(parse_repo(repo), "calls")
+    assert any(e.src == "app.py::main" and e.dst == "pkg/sessions.py::Session" for e in calls)
