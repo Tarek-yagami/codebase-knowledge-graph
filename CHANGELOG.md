@@ -10,6 +10,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Calls now resolve through import aliases (`from .a import f as g`, `import * as ns`, `pkg.F()` in Go) and to functions nested in the caller.
 - Dependency, hidden and test directories and files (`node_modules`, `.venv`, `*_test.go`, `*.spec.ts`, ...) are skipped during the walk.
 - Full PHP support, built around Laravel: namespaces and `use` imports resolved through composer.json PSR-4, inheritance and traits, `$this->`, `self::`, `parent::` and static calls, and route files linked to the controller methods they register. Blade templates are skipped.
+- Laravel resource routes link to the controller actions they cover, and invokable controllers to their `__invoke`.
+- Vue single-file components: `<script setup>` code is extracted under a component node, and the template links to child components and to the handlers it calls.
 - React: rendering a component in JSX counts as a call to it, and `forwardRef`/`memo`-wrapped components are recognized.
 - Next.js: imports through `tsconfig.json`/`jsconfig.json` `paths` and `baseUrl` aliases resolve, including inherited configs.
 - The 3D viewer shows each node's language.
@@ -18,6 +20,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Node ids are now file-path based (`pkg/models.py::User.save`) instead of dotted Python paths, so they stay unique across languages.
 
 ### Fixed
+- An arrow function whose body is a single call (`() => g()`) didn't record that call.
 - A function calling the same target several times produced one edge per call site.
 - Nested functions were attached to the enclosing class or module instead of the function that defines them.
 - Bare calls to builtins like `set()` or `next()` could resolve to an unrelated method with the same name.

@@ -125,6 +125,49 @@ def test_route_file_links_to_controller_method(make_repo):
     assert ("routes/web.php", "app/Http/Controllers/UserController.php::UserController.index") in calls
 
 
+def test_resource_and_invokable_routes_link_to_controller_actions(make_repo):
+    result = laravel_app(
+        make_repo,
+        {
+            "app/Http/Controllers/PhotoController.php": """<?php
+
+namespace App\\Http\\Controllers;
+
+class PhotoController extends Controller
+{
+    public function index() {}
+    public function show() {}
+}
+""",
+            "app/Http/Controllers/PingController.php": """<?php
+
+namespace App\\Http\\Controllers;
+
+class PingController extends Controller
+{
+    public function __invoke() {}
+}
+""",
+            "routes/api.php": """<?php
+
+use App\\Http\\Controllers\\{PhotoController, PingController};
+use Illuminate\\Support\\Facades\\Route;
+
+Route::apiResource('photos', PhotoController::class);
+Route::get('/ping', PingController::class);
+""",
+        },
+    )
+    controllers = "app/Http/Controllers"
+    route_calls = {dst for src, dst in edges(result, "calls") if src == "routes/api.php"}
+    # Only the resource actions the controller actually defines get an edge.
+    assert route_calls == {
+        f"{controllers}/PhotoController.php::PhotoController.index",
+        f"{controllers}/PhotoController.php::PhotoController.show",
+        f"{controllers}/PingController.php::PingController.__invoke",
+    }
+
+
 def test_blade_templates_are_skipped(make_repo):
     result = laravel_app(make_repo, {"resources/views/welcome.blade.php": "<h1>{{ $title }}</h1>\n"})
     assert not any(n.file.endswith(".blade.php") for n in result.nodes.values())

@@ -8,7 +8,7 @@
 
 An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it, then lets you click through it as it forms. Files, functions, and classes become the nodes, and the edges between them come from how the code actually behaves: real imports, real function calls, real class inheritance pulled out by static analysis, plus a semantic layer from embeddings that connects pieces conceptually even when nothing directly calls or imports between them. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, tracing what actually depends on a file before you change it or getting a sensible, dependency-ordered path through an unfamiliar codebase, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
 
-**[Try the live 3D graph](https://tarek-yagami.github.io/codebase-knowledge-graph/)**, no install, click straight into it. It's the `requests` library, pre-built and hosted as a static page, the same output `codegraph-viz` would generate for any codebase you point it at, in Python, TypeScript/JavaScript, Go, PHP, or a dozen other languages.
+**[Try the live 3D graph](https://tarek-yagami.github.io/codebase-knowledge-graph/)**, no install, click straight into it. It's the `requests` library, pre-built and hosted as a static page, the same output `codegraph-viz` would generate for any codebase you point it at, in Python, TypeScript/JavaScript, Vue, Go, PHP, or a dozen other languages.
 
 **Want to just use it?** Skip straight to the **[usage guide](docs/USAGE.md)** for install options, connecting it to Claude Code, and a full tool reference. Everything below this point is the research story: what was tested, what held up, and what didn't.
 
@@ -24,7 +24,7 @@ Every file goes to an extractor for its language, and each extractor only report
 
 | Support | Languages | What you get |
 |---|---|---|
-| Full | Python, TypeScript/JavaScript (incl. TSX/JSX), Go, PHP | Definitions, imports resolved to files, calls, inheritance |
+| Full | Python, TypeScript/JavaScript (incl. TSX/JSX), Vue, Go, PHP | Definitions, imports resolved to files, calls, inheritance |
 | Basic | Java, Rust, Ruby, C, C++, and anything else [tree-sitter-language-pack](https://github.com/xberg-io/tree-sitter-language-pack) ships a tags query for | Definitions with their nesting, calls within a file or to unambiguous names, no imports or inheritance |
 
 Python uses the standard library's `ast` module. Everything else uses tree-sitter, whose grammars download the first time a language shows up. Some details differ by language. Go methods attach to their receiver type even when it's declared in another file of the package, and embedded structs count as inheritance since their methods get promoted. TypeScript follows ESM `.js` specifiers back to their `.ts` source and handles `index` files. Rust `impl` blocks attach to their type.
@@ -33,11 +33,12 @@ The frameworks people actually build with are covered too:
 
 - **React:** rendering `<Button />` counts as a call to the `Button` component, and components wrapped in `forwardRef` or `memo` are still recognized as components.
 - **Next.js:** the `@/components/...` style imports resolve through the `paths` and `baseUrl` in `tsconfig.json` or `jsconfig.json`, including configs that inherit them through `extends`.
-- **Laravel:** class names expand through each file's namespace and `use` statements, then map to files with composer.json's PSR-4 rules, the same way PHP finds them at runtime. `parent::`, `self::` and static calls like `User::find()` resolve, traits count as inheritance, and a route file's `[UserController::class, 'index']` links straight to that controller method. Framework classes from `vendor/` stay external.
+- **Laravel:** class names expand through each file's namespace and `use` statements, then map to files with composer.json's PSR-4 rules, the same way PHP finds them at runtime. `parent::`, `self::` and static calls like `User::find()` resolve, traits count as inheritance, and route files link straight to the controller methods they register, whether written as `[UserController::class, 'index']`, a resource route (`Route::apiResource('photos', PhotoController::class)` links to the actions the controller defines) or an invokable controller (linked to its `__invoke`). Framework classes from `vendor/` stay external.
+- **Vue:** each single-file component becomes a node named after its file, holding the functions from its `<script setup>`. The template links to the child components it renders (`<SongItem>` and `<song-item>` alike) and to the handlers and functions it calls (`@play="onPlay"`).
 
 Node ids are file paths, so they stay unique across languages: `src/requests/sessions.py` for a module and `src/requests/sessions.py::Session.send` for anything defined in it.
 
-Tested on real repos: `requests` (Python, 316 nodes, 0.1s), `gin` (Go, 661 nodes, 0.1s), `zod` (a TypeScript monorepo, 2,494 nodes, 0.8s), `taxonomy` (a Next.js app, 419 nodes, 0.1s) and `koel` (a Laravel app, 5,343 nodes, 1.2s).
+Tested on real repos: `requests` (Python, 316 nodes, 0.1s), `gin` (Go, 661 nodes, 0.1s), `zod` (a TypeScript monorepo, 2,494 nodes, 0.8s), `taxonomy` (a Next.js app, 419 nodes, 0.1s) and `koel` (a Laravel app with a Vue frontend, 7,176 nodes, 2.1s).
 
 ## The real problem
 
@@ -96,7 +97,7 @@ What isn't cached yet, and honestly should be: the semantic similarity edges get
 
 ## Status
 
-The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 60 tests, covering every supported language and framework), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
+The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 65 tests, covering every supported language and framework), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
 
 ## Try it yourself
 
@@ -112,6 +113,6 @@ Static analysis has real limits around dynamic dispatch and reflection, and thos
 - **A real single-shot RAG benchmark.** RQ1's comparison was diluted by both conditions sharing the same iterative agent. Testing graph vs. flat-chunk retrieval with exactly one retrieval call and no follow-up would isolate structure's actual value instead of the agent's ability to compensate for weak retrieval.
 - **Light type tracking for call resolution.** `self.x()` already resolves correctly; the next honest gap is a local variable built from a direct constructor call (`session = Session(); session.request()`). Tracking just that narrow pattern, not general type inference, would close a real chunk of what's currently left unresolved.
 - **Workspace and path-alias imports for TypeScript.** Monorepos import their own packages by name (`import { z } from "zod/v4"`) and many projects use `tsconfig` path aliases. Neither is followed yet, so those imports show up as external.
-- **Vue single-file components.** A Laravel frontend is often Vue, and `.vue` files aren't parsed yet, so imports of them stay unresolved.
+- **Vue's Options API.** Only `<script setup>` components (the Vue 3 default) get their functions extracted. Methods declared in an `export default { methods: {...} }` object aren't picked up yet.
 - **Promote more languages to full support.** Java and Rust are the obvious next ones. Each needs its own import resolver (package paths for Java, `mod` trees for Rust); definitions and calls already work through the generic tier.
 - **Publish to PyPI.** `pip install git+...` works today; an actual PyPI release is the remaining step between "installable" and "the way people normally install a Python tool."

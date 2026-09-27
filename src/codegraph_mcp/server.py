@@ -27,7 +27,7 @@ mcp = MCPServer(
     "codegraph",
     instructions=(
         "Tools for querying the structure of a codebase (imports, function calls, "
-        "class inheritance) that has already been statically analyzed (Python, TypeScript/JavaScript, Go, PHP, "
+        "class inheritance) that has already been statically analyzed (Python, TypeScript/JavaScript, Vue, Go, PHP, "
         "plus basic support for other tree-sitter languages). "
         "Node ids are file paths, with definitions as `<path>::<Class.method>`. Prefer these tools "
         "over reading or grepping source files whenever the question is about how code "

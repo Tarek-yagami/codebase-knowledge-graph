@@ -32,9 +32,13 @@ def parse(grammar: str, source: bytes) -> Tree:
 
 
 def descendants(node: SyntaxNode | None, prune: frozenset[str] = frozenset()) -> Iterator[SyntaxNode]:
-    """Every named node below node, not descending into (or yielding) nodes
-    whose type is in prune."""
-    stack = list(node.named_children) if node is not None else []
+    """node and every named node below it, not descending into (or
+    yielding) nodes whose type is in prune. node itself is always included,
+    since an arrow function's body can be a single call: `() => g()`."""
+    if node is None:
+        return
+    yield node
+    stack = list(node.named_children)
     while stack:
         n = stack.pop()
         if n.type in prune:

@@ -18,6 +18,10 @@ from codegraph.languages.base import FileFacts, Language, Ref, RepoIndex
 _CLASS_TYPES = {"class_declaration", "interface_declaration", "trait_declaration", "enum_declaration"}
 _FUNCTION_TYPES = {"function_definition", "method_declaration"}
 _NAME_TYPES = {"name", "qualified_name"}
+_RESOURCE_ACTIONS = {
+    "resource": ("index", "create", "store", "show", "edit", "update", "destroy"),
+    "apiResource": ("index", "store", "show", "update", "destroy"),
+}
 # Definitions get their own node, so their calls aren't credited to the enclosing scope.
 _OWN_NODE_TYPES = frozenset(_CLASS_TYPES | _FUNCTION_TYPES)
 
@@ -155,6 +159,25 @@ class _Walker:
         elif scope.type in _NAME_TYPES:
             cls = self.names.ref(src, scope)
             self.facts.calls.append(Ref(src, method, receiver=cls.name, receiver_import=cls.via_import))
+            if cls.name == "Route":
+                self._route_actions(src, call, method)
+
+    def _route_actions(self, src: str, call: SyntaxNode, route_method: str) -> None:
+        """Controllers a Laravel route passes as a bare `Foo::class`: a
+        resource route maps to its standard actions, anything else to the
+        controller's `__invoke`. Actions the controller doesn't define just
+        stay unresolved, which also covers `->only([...])`."""
+        args = call.child_by_field_name("arguments")
+        for arg in args.named_children if args is not None else []:
+            value = arg.named_children[0] if arg.named_children else None
+            parts = (
+                value.named_children if value is not None and value.type == "class_constant_access_expression" else []
+            )
+            if len(parts) != 2 or ts.text(parts[1]).lower() != "class":
+                continue
+            cls = self.names.ref(src, parts[0])
+            for action in _RESOURCE_ACTIONS.get(route_method, ("__invoke",)):
+                self.facts.calls.append(Ref(src, action, receiver=cls.name, receiver_import=cls.via_import))
 
     def _callable_array(self, src: str, array: SyntaxNode) -> None:
         """`[UserController::class, 'index']`, the way Laravel routes, events

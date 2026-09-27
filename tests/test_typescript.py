@@ -136,3 +136,8 @@ export default function Page() { cn() }
     result = parse_repo(repo)
     assert edges(result, "imports") == {("src/app/page.tsx", "src/lib/utils.ts")}
     assert ("src/app/page.tsx::Page", "src/lib/utils.ts::cn") in edges(result, "calls")
+
+
+def test_arrow_function_with_expression_body_records_its_call(make_repo):
+    repo = make_repo({"a.ts": "function g() {}\nconst f = () => g()\n"})
+    assert ("a.ts::f", "a.ts::g") in edges(parse_repo(repo), "calls")

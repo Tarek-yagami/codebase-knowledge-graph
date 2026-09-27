@@ -1,5 +1,5 @@
 """Picks the extractor for a file: a dedicated one for Python, TypeScript/
-JavaScript, Go and PHP, else the generic tags-based one for any other language
+JavaScript, Vue, Go and PHP, else the generic tags-based one for any other language
 tree-sitter-language-pack knows, else None (not source code).
 """
 
@@ -16,10 +16,13 @@ from codegraph.languages.go import GoLanguage
 from codegraph.languages.php import PhpLanguage
 from codegraph.languages.python import PythonLanguage
 from codegraph.languages.typescript import TypeScriptLanguage
+from codegraph.languages.vue import VueLanguage
 
+_TYPESCRIPT = TypeScriptLanguage()
 _DEDICATED_LANGUAGES: tuple[Language, ...] = (
     PythonLanguage(),
-    TypeScriptLanguage(),
+    _TYPESCRIPT,
+    VueLanguage(_TYPESCRIPT),
     GoLanguage(),
     PhpLanguage(),
 )
