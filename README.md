@@ -1,65 +1,34 @@
-<h1 align="center">Codebase Knowledge Graph</h1>
+# Codebase Knowledge Graph
 
-<p align="center">
-  <strong>Your codebase as a world you can fly into.</strong>
-  <br />
-  Any repo becomes an explorable 3D knowledge graph, and Claude Code gets the same map through MCP to answer questions without reading every file.
-</p>
+Your codebase as a world you can fly into. Any repo becomes an explorable 3D knowledge graph, and Claude Code gets the same map through MCP to answer questions without reading every file.
 
-<p align="center">
-  <a href="https://tarek-yagami.github.io/codebase-knowledge-graph/"><img src="https://img.shields.io/badge/Live_Demo-00c853" alt="Live demo" /></a>
-  <a href="https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml"><img src="https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml/badge.svg" alt="tests" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+" />
-</p>
+[![Live demo](https://img.shields.io/badge/Live_Demo-00c853)](https://tarek-yagami.github.io/codebase-knowledge-graph/)
+[![tests](https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml/badge.svg)](https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 
 <p align="center">
   <img src="docs/screenshots/overview.png" width="48%" alt="Module-level overview of the requests library as a 3D graph">
   <img src="docs/screenshots/inside_module.png" width="48%" alt="Inside the sessions module, showing its classes and functions inside a translucent shell">
 </p>
 
----
+This tool reads a repository the way a compiler's front end does, and keeps what it learns. Every file, class and function becomes a node, and every import, call and inheritance becomes an edge you can check against the source. That graph gets used in two ways.
 
-**You just opened a codebase you've never seen. Where does anything live, and what breaks if you touch it?**
+## Walk around it in 3D
 
-Point this at any repo and it reads the code file by file, tracing every import, call and base class. You get a 3D map you can fly through one module at a time. Claude Code gets the same map as a set of tools, so "who calls this?" becomes one lookup instead of a search through dozens of files.
+Modules float in space like planets. Click one to fly inside and see its classes and functions orbiting in their own shell, then click the empty space to fly back out. Lines are colored by kind, so imports, calls and inheritance never blur together. The [live demo](https://tarek-yagami.github.io/codebase-knowledge-graph/) is the `requests` library, ready to explore in your browser with nothing to install.
 
-> **[Try the live demo](https://tarek-yagami.github.io/codebase-knowledge-graph/)** with the `requests` library, pre-built and running in your browser. Nothing to install.
+## Let Claude Code use it
 
-## What you can do
+Without it, Claude Code answers structural questions by grepping and opening files until the picture comes together. With the graph as an MCP server, those questions become a single lookup. Here's what it gives back on the `requests` library:
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Fly through your code</h3>
-      <p>Every module is its own world. Step inside to see its classes and functions, with lines for the imports, calls and inheritance between them.</p>
-    </td>
-    <td width="50%" valign="top">
-      <h3>Ask Claude Code about it</h3>
-      <p>An MCP server lets Claude Code look up who calls a function or what a module depends on directly, and spend fewer tokens getting there.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>See what a change affects</h3>
-      <p>Hand it the files you changed and get back everything that depends on them, directly or through a chain of calls and imports.</p>
-    </td>
-    <td width="50%" valign="top">
-      <h3>Know where to start reading</h3>
-      <p>Get the modules in reading order, each one after the code it builds on, so an unfamiliar project makes sense from the ground up.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Search by meaning</h3>
-      <p>Ask for "code that retries a failed request" and find it even when nothing is named retry. Runs on a small local model, with no API key, as an optional extra.</p>
-    </td>
-    <td width="50%" valign="top">
-      <h3>Works on real stacks</h3>
-      <p>Full support for 11 languages plus Laravel, React, Next.js and Vue, and a repo mixing several of them still comes out as one graph.</p>
-    </td>
-  </tr>
-</table>
+| Ask Claude Code | It looks up | What comes back on `requests` |
+|---|---|---|
+| What calls `api.request`? | `get_relationships` | `get`, `options`, `head`, `post`, `put`, `patch` and `delete`, the seven verb helpers |
+| Which classes define `close()`? | `find_by_name` | `BaseAdapter`, `HTTPAdapter`, `Response` and `Session` |
+| What could break if I change `cookies.py`? | `impact_of_changes`, or `/codegraph:impact` | 30 functions and classes spread across 10 other files |
+| Where should I start reading? | `suggested_reading_order`, or `/codegraph:tour` | The modules in order, starting from `__version__.py` and `compat.py`, which everything else builds on |
+| Where's the code that retries failed requests? | `semantic_search` (optional extra) | Matches by meaning, even when nothing is named "retry" |
 
 ## Quick start
 
@@ -70,7 +39,7 @@ You need [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
 /plugin install codegraph@codebase-knowledge-graph
 ```
 
-Restart Claude Code and that's it. Claude Code now reaches for the graph on its own whenever a question is about how code connects, like "what calls `Session.send`?" or "what does this module depend on?". The plugin also adds three commands:
+Restart Claude Code and that's it. Claude Code now reaches for the graph on its own whenever a question is about how code connects, like "what calls this function?" or "what does this module depend on?". The plugin also adds three commands:
 
 | Command | What it does |
 |---|---|
