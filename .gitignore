@@ -25,3 +25,7 @@ data/embedding_cache/
 
 # local MCP approval state and other personal Claude Code state, not shared
 .claude/
+
+# Package build output (from pip wheel or uvx --from .)
+build/
+*.egg-info/
