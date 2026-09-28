@@ -1,138 +1,115 @@
-# Codebase Knowledge Graph
+<h1 align="center">Codebase Knowledge Graph</h1>
 
-[![tests](https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml/badge.svg)](https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+<p align="center">
+  <strong>Your codebase as a world you can fly into.</strong>
+  <br />
+  Any repo becomes an explorable 3D knowledge graph, and Claude Code gets the same map through MCP to answer questions without reading every file.
+</p>
 
-## What this is
-
-An agent that explores a real, unfamiliar codebase and builds a live, explorable knowledge graph of it, then lets you click through it as it forms. Files, functions, and classes become the nodes, and the edges between them come from how the code actually behaves: real imports, real function calls, real class inheritance pulled out by static analysis, plus a semantic layer from embeddings that connects pieces conceptually even when nothing directly calls or imports between them. Claude Code can also query the graph directly through an MCP server instead of reading and grepping through files, tracing what actually depends on a file before you change it or getting a sensible, dependency-ordered path through an unfamiliar codebase, and the graph itself renders as a 3D scene you can navigate to build a mental map of the codebase.
-
-**[Try the live 3D graph](https://tarek-yagami.github.io/codebase-knowledge-graph/)**, no install, click straight into it. It's the `requests` library, pre-built and hosted as a static page, the same output `codegraph-viz` would generate for any codebase you point it at, in Python, TypeScript/JavaScript, Vue, Go, PHP, or a dozen other languages.
-
-**Want to just use it?** Skip straight to the **[usage guide](docs/USAGE.md)** for install options, connecting it to Claude Code, and a full tool reference. Everything below this point is the research story: what was tested, what held up, and what didn't.
+<p align="center">
+  <a href="https://tarek-yagami.github.io/codebase-knowledge-graph/"><img src="https://img.shields.io/badge/Live_Demo-00c853" alt="Live demo" /></a>
+  <a href="https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml"><img src="https://github.com/Tarek-yagami/codebase-knowledge-graph/actions/workflows/tests.yml/badge.svg" alt="tests" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+" />
+</p>
 
 <p align="center">
   <img src="docs/screenshots/overview.png" width="48%" alt="Module-level overview of the requests library as a 3D graph">
   <img src="docs/screenshots/inside_module.png" width="48%" alt="Inside the sessions module, showing its classes and functions inside a translucent shell">
 </p>
-<p align="center"><em>Left: the module-level overview of <code>requests</code>. Right: stepped inside the <code>sessions</code> module, its classes and functions floating inside their own self-contained shell.</em></p>
 
-## Languages
+---
 
-Every file goes to an extractor for its language, and each extractor only reports what it can see in that one file: definitions, import specs, call sites, base classes. One shared resolver then links those names across the whole repo with the same confidence rules for every language. So a Python backend and a TypeScript frontend in one repo end up in one graph, and a Python `helper()` never resolves to a TypeScript `helper`.
+**You just opened a codebase you've never seen. Where does anything live, and what breaks if you touch it?**
 
-| Support | Languages | What you get |
-|---|---|---|
-| Full | Python, TypeScript/JavaScript (incl. TSX/JSX), Vue, Go, PHP, Java, Kotlin, C#, Rust, C, C++ | Definitions, imports resolved to files, calls, inheritance |
-| Basic | Ruby, Swift, Dart, Scala, Lua, Elixir, and anything else [tree-sitter-language-pack](https://github.com/xberg-io/tree-sitter-language-pack) ships a tags query for | Definitions with their nesting, inheritance, and calls within a file or to unambiguous names, but no imports |
+Point this at any repo and it reads the code file by file, tracing every import, call and base class. You get a 3D map you can fly through one module at a time. Claude Code gets the same map as a set of tools, so "who calls this?" becomes one lookup instead of a search through dozens of files.
 
-Python uses the standard library's `ast` module. Everything else uses tree-sitter, whose grammars download the first time a language shows up.
+> **[Try the live demo](https://tarek-yagami.github.io/codebase-knowledge-graph/)** with the `requests` library, pre-built and running in your browser. Nothing to install.
 
-A name resolves through the most specific scope that has it: the module it was imported from (following re-exports like an `index.ts` barrel or a package `__init__.py`), the same file, the same package (Go, Java, Kotlin and C# files in one package see each other without importing), namespaces opened by wildcard imports (`import a.b.*`, C#'s `using`, Rust's `use a::*`), and only then a unique name anywhere in the repo. In statically typed languages a call on a variable also resolves through its declared type, so `repo.findById()` reaches `OwnerRepository.findById` when `repo` is declared as an `OwnerRepository`, whether it's a field, a parameter or a local. That works in Java, C#, C++, Rust, Swift and the other tree-sitter languages without per-language code, because their grammars mark declarations the same way.
+## What you can do
 
-Some details differ by language:
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>Fly through your code</h3>
+      <p>Every module is its own world. Step inside to see its classes and functions, with lines for the imports, calls and inheritance between them.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>Ask Claude Code about it</h3>
+      <p>An MCP server lets Claude Code look up who calls a function or what a module depends on directly, and spend fewer tokens getting there.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>See what a change affects</h3>
+      <p>Hand it the files you changed and get back everything that depends on them, directly or through a chain of calls and imports.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>Know where to start reading</h3>
+      <p>Get the modules in reading order, each one after the code it builds on, so an unfamiliar project makes sense from the ground up.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>Search by meaning</h3>
+      <p>Ask for "code that retries a failed request" and find it even when nothing is named retry. Runs on a small local model, with no API key.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>Works on real stacks</h3>
+      <p>Full support for 11 languages plus Laravel, React, Next.js and Vue, and a repo mixing several of them still comes out as one graph.</p>
+    </td>
+  </tr>
+</table>
 
-- **Go:** methods attach to their receiver type even when it's declared in another file of the package, and embedded structs count as inheritance since their methods get promoted.
-- **Rust:** `mod` and `use` paths (`crate::`, `self::`, `super::`, other crates in the Cargo workspace) map to files the way rustc lays modules out, including custom crate roots from `Cargo.toml`. `impl Trait for Type` makes Type inherit Trait, and a qualified std trait like `std::fmt::Debug` never lands on a same-named type in the repo.
-- **C and C++:** `#include`s resolve next to the including file, else by a unique path suffix. Methods defined outside their class (`void Foo::bar()`) attach to Foo wherever it's declared, header prototypes don't count as definitions, and a `.h` file is read as C or C++ by what it contains.
-- **Kotlin and Java** share import resolution, so an Android project's Kotlin can import its Java classes and the other way around.
+## Quick start
 
-The frameworks people actually build with are covered too:
+```bash
+pip install git+https://github.com/Tarek-yagami/codebase-knowledge-graph.git
+codegraph-viz /path/to/your/project
+```
 
-- **React:** rendering `<Button />` counts as a call to the `Button` component, and components wrapped in `forwardRef` or `memo` are still recognized as components.
-- **Next.js and TypeScript monorepos:** `@/components/...` style imports resolve through the `paths` and `baseUrl` in `tsconfig.json` or `jsconfig.json`, including configs that inherit them through `extends`. A monorepo importing its own packages by name (`import { z } from "zod/v4"`) resolves through each package's `exports` to its source files.
-- **Laravel:** class names expand through each file's namespace and `use` statements, then map to files with composer.json's PSR-4 rules, the same way PHP finds them at runtime. `parent::`, `self::` and static calls like `User::find()` resolve, traits count as inheritance, and route files link straight to the controller methods they register, whether written as `[UserController::class, 'index']`, a resource route (`Route::apiResource('photos', PhotoController::class)` links to the actions the controller defines) or an invokable controller (linked to its `__invoke`). Framework classes from `vendor/` stay external.
-- **Vue:** each single-file component becomes a node named after its file. It holds the functions from its `<script setup>`, or the methods, computed properties and hooks of an Options API component, where `this.save()` resolves to the component's own method. The template links to the child components it renders (`<SongItem>` and `<song-item>` alike) and to the handlers and functions it calls (`@play="onPlay"`).
+That writes `data/graph3d.html`, which you open in your browser. Click a module to step inside it, and click the empty space around it to step back out. The first install takes a while, since semantic search pulls in PyTorch.
 
-Node ids are file paths, so they stay unique across languages: `src/requests/sessions.py` for a module and `src/requests/sessions.py::Session.send` for anything defined in it.
+To give Claude Code the map, add this to `.mcp.json` in the project you're working on:
 
-Tested on real repos, with parse times:
+```json
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "codegraph-mcp",
+      "args": ["/absolute/path/to/your/project"]
+    }
+  }
+}
+```
 
-| Repo | What it is | Nodes | Parse |
-|---|---|---|---|
-| `requests` | Python library | 316 | 0.2s |
-| `gin` | Go web framework | 661 | 0.1s |
-| `zod` | TypeScript monorepo | 2,494 | 1.1s |
-| `taxonomy` | Next.js app | 419 | 0.3s |
-| `koel` | Laravel app with a Vue frontend | 7,176 | 2.8s |
-| `spring-petclinic` | Java Spring app | 145 | 0.1s |
-| `CleanArchitecture` | C# ASP.NET app | 403 | 0.3s |
-| `ripgrep` | Rust Cargo workspace | 3,521 | 1.3s |
-| `spdlog` | C++ library | 2,055 | 1.1s |
-| `redis` | C server | 11,043 | 5.8s |
+Then run `claude` in that folder and approve the `codegraph` server when it asks. The [usage guide](docs/USAGE.md) covers Docker, every tool the server offers, and troubleshooting.
 
-## The real problem
+## Languages and frameworks
 
-Understanding an unfamiliar codebase is slow, and it's something almost every developer has felt firsthand. A knowledge graph makes that structure visible and walkable instead of hidden inside files you have to read one at a time. Whether making the structure explicit, real nodes, real edges, actually produces better answers than a good semantic search over the same code was treated as a real, open question here rather than assumed, and testing it honestly turned out to be as much a part of this project as building the graph itself.
+| | |
+|---|---|
+| **Full support** | Python, TypeScript, JavaScript, Vue, Go, PHP, Java, Kotlin, C#, Rust, C, C++ |
+| **Frameworks** | React, Next.js, Laravel, Vue, TypeScript monorepos |
+| **Basic support** | Ruby, Swift, Dart, Scala, Lua, Elixir, and most other languages tree-sitter can read |
 
-## The honest bottom line
+With full support, imports, calls and inheritance are all linked across files. Basic support gets definitions, inheritance and calls, but doesn't follow imports yet. See [how each language is handled](docs/LANGUAGES.md) for the details.
 
-Two different things got tested, and they came back with different answers.
+## How it works
 
-Does the graph make Claude Code's answers *better*? No, not in any way this project could detect, even after deliberately designing questions to stress it. Does the graph make Claude Code *cheaper*? Yes, modestly and inconsistently, but really. Full evidence for both is below.
+Everything comes from reading the source. Nothing gets run, and no AI guesses at the structure. Python goes through the standard library's `ast` module and every other language through [tree-sitter](https://tree-sitter.github.io/). Each file reports what it defines and what it refers to, and one shared resolver links those references across the repo using the file's imports, its package and the declared types of its variables. When a name could mean two different things it stays unlinked, so every edge you see is one you can trust.
 
-So the value this project actually delivers is narrower than the original pitch, structured retrieval doesn't seem to produce smarter answers, at least not for an agent already capable of iterating on its own. What holds up is a real, if uneven, cost saving when Claude Code has structural access instead of grepping cold, plus something no flat-chunk system can offer at all regardless of how good its retrieval is: an actual, explorable 3D map of how a codebase fits together. That's a different kind of value, spatial orientation rather than answer accuracy, and it's not something the quality comparison below was ever positioned to capture either way.
+## Does it actually help?
 
-## Research questions
+This project started as a research question and was tested on real codebases. Claude Code with the graph used about 5% fewer tokens on a small library and 14% fewer on Django, and it reached structural answers in fewer steps. Its answers weren't more accurate than with plain semantic search, though: both found all 21 `save()` methods in Django. The payoff is cheaper exploration and a map you can actually see. The [research write-up](docs/RESEARCH.md) has the full story, including what didn't work.
 
-1. Does structural graph traversal plus semantic retrieval answer real "how does X relate to Y" questions about a codebase better than plain flat-chunk RAG over the same code? **Tested: no.**
-2. How much of a codebase's real structure can static analysis recover automatically, and where does it break down, say with dynamic dispatch, reflection, or metaprogramming? **Tested: yes, three real limits found.**
-3. Can the exploration stay visible and still be fast enough to hold up in a demo on a real, non-trivial repo? **Tested: yes, with real numbers below.**
-4. How much cheaper is answering a real codebase question through the pre-built graph compared to a general coding agent that explores the repo from scratch with only file tools, at the same answer quality? **Tested: yes, modestly.**
+## Documentation
 
-## What the token-economy experiment found (research question 4)
+- [Usage guide](docs/USAGE.md): install options, Claude Code setup, tool reference, troubleshooting
+- [How each language is handled](docs/LANGUAGES.md): resolution rules, per-language details, tested repos
+- [Research findings](docs/RESEARCH.md): the experiments and what they showed
+- [Changelog](CHANGELOG.md)
 
-The same real questions were run twice through Claude Code, once with only its default file tools and once with the codegraph MCP server also available, first against `requests` (21 files) and then against Django's core package (846 files), to see whether a pre-built graph actually saves tokens over exploring a codebase cold, and whether that gap grows with codebase size the way the theory predicts.
+## License
 
-It does. On `requests`, the graph condition used about 5% fewer tokens overall, a real but modest edge. On Django, that grew to about 14% fewer tokens overall, and the clearest single result in the whole experiment was "how many classes define `save()` and how do they relate": the graph answered it in 16 turns and 22% fewer tokens, where the file-reading baseline needed 26 turns to track down the same set of methods by hand.
-
-The experiment also caught a real bug in the tool along the way. Common-word searches (`close()`, `clean()`) sometimes backfired, since `search_nodes` matched against docstrings as well as names, and a docstring casually mentioning "clean" has nothing to do with a method actually named `clean`. Splitting that into a precise `find_by_name` lookup plus a ranked, clearly-labeled fuzzy search fixed the worst case outright, the `close()` question went from a loss against baseline to using less than half the tokens it needed before.
-
-One more honest finding: total dollar cost barely moved between conditions in either experiment, because it's dominated by a fixed per-call cost of loading the system prompt and tool definitions, not by how much exploring happened. Token count, not cost, is the metric that actually reflects what's being tested here.
-
-## What the graph-vs-flat-RAG experiment found (research question 1)
-
-This one compared answer quality directly: Claude Code with only a structural graph tool against Claude Code with only a flat semantic-search tool built from the exact same embeddings, no relationships, no structure, just isolated code chunks ranked by meaning. Both conditions were deliberately denied Read/Grep/Glob, so neither could fall back to just reading files.
-
-On straightforward relationship questions (does this class inherit from that one, what does this method call), both conditions gave equally correct answers. The real test was two questions designed to stress recall: "list every class that defines a `save()` method" (21 real ones in Django) and "list every place `clean()` is defined" (28 real ones). Flat-chunk retrieval has no guaranteed way to surface a complete list like that, top-k similarity search could plausibly miss some. It didn't. Every line number both conditions cited was cross-checked against the real Django source directly, and both answers referenced the exact same complete set, 21 out of 21, 28 out of 28, every time.
-
-Turn counts told an inconsistent story rather than a clean one. On `clean()`, the graph needed 5 turns against flat-RAG's 18. On `save()`, the graph needed 24 against flat-RAG's 21, flat-RAG was faster there. And on the one concrete factual error found in either experiment, the graph condition was the one that got it wrong: it labeled line 1399 of `forms/models.py` as `ModelChoiceField.clean`, when the real class at that line is `InlineForeignKeyField`. Flat-RAG named it correctly. The graph also undercounted its own complete, correct list as "27 definitions" when it had actually listed all 28, a self-counting slip rather than a missing item, but still an error the flat-chunk answer didn't make.
-
-The likely explanation is that this comparison wasn't as clean a test of structure's value as it looked. Both conditions are driven by the same capable, iterative Claude Code agent, which can just call its tool again with different phrasing to compensate for weaker retrieval. A true single-shot RAG benchmark, retrieve once, answer from that alone, no iteration, would likely show a real gap. What got tested here is closer to "does an agentic assistant benefit from a graph tool versus a flat-chunk tool", both agentic, both able to iterate. Under that framing, near-parity is a legitimate result rather than a flaw in the test.
-
-## Where static analysis breaks down (research question 2)
-
-Three real limits showed up during actual use, not hypothetical ones.
-
-Name collisions are the biggest one. A call like `self.request()` only means one specific thing at runtime, but nothing in the source text says which one without knowing the type of `self`. Early on, this resolved to whichever function happened to be named `request` first in parse order, which was simply wrong more often than it was right. The fix was to stop guessing: `self.x()` now resolves against the enclosing class and its base classes specifically. A bare `x()` resolves through the file's imports first, then the same file, then the same package, and only falls back to the whole codebase when the name is unambiguous there. A name imported from outside the repo never resolves to a same-named function inside it. Everything else is left honestly unresolved. That's a real, permanent ceiling on what static analysis alone can determine, not a bug still waiting to be fixed.
-
-Typing overloads are a smaller, cleaner case. A method written as two or three `@overload` stub signatures followed by the real implementation is, to a naive AST walk, three separate functions sharing one name, which produced literal duplicate edges in the graph. The fix was to recognize and skip overload stubs entirely, since they're compile-time-only and carry no real behavior of their own.
-
-The hardest case can't be fixed at all, only acknowledged. Django defines `class Manager(BaseManager.from_queryset(QuerySet)):`, a base class that's the *return value of a function call*, not a name. Knowing what that resolves to requires actually running `from_queryset(QuerySet)`, which is exactly the kind of dynamic behavior static analysis is fundamentally unable to see. This is the honest edge of what parsing source text can ever tell you, no amount of cleverness in the parser closes that gap, only executing the code would.
-
-## How fast this stays at scale (research question 3)
-
-Parsing Django's core package (846 files, about 12,000 nodes) takes single-digit seconds once the OS has the files cached, and up to around 12 seconds cold. Semantic embeddings for all ~11,000 functions and classes take about 2 minutes the very first time, then get cached to disk and load in well under a second after that.
-
-What isn't cached yet, and honestly should be: the semantic similarity edges get recomputed from the cached embeddings on every single server startup, which took about 4-5 seconds in testing on Django's scale. Combined with parsing and import overhead, a fresh MCP server launch against Django lands somewhere in the 10-25 second range depending on how warm the filesystem cache is. That's fine for a single demo session, since the server stays running once started, but it's real, measured latency, not an assumption, and caching the similarity edges alongside the embeddings would be the obvious next fix if this needed to feel instant on every single launch.
-
-## Status
-
-The static analysis pipeline, the [3D graph viewer](https://tarek-yagami.github.io/codebase-knowledge-graph/), the MCP server, the semantic embedding layer, and both experiments above are built, tested against real codebases, and reported honestly, including where the results didn't confirm the original hypothesis. There's an automated test suite (`pytest`, 81 tests, covering every supported language and framework), `ruff` and `mypy` both clean, CI running all of that plus a Docker build check on every push, and a proper installable package with console scripts.
-
-## Try it yourself
-
-See the **[usage guide](docs/USAGE.md)** for the quickstart, install options (pip, source checkout, Docker), connecting it to Claude Code, a tool reference, troubleshooting, and how to reproduce the research above.
-
-## Out of scope for now
-
-Static analysis has real limits around dynamic dispatch and reflection, and those limits are being accepted rather than solved. The goal is a strong local demo, not a hosted multi-user product, so there's no deployment work planned. The graph doesn't need a full incremental-update engine either, that's a nice-to-have rather than something the project depends on. And there's no fine-tuning anywhere in this.
-
-## Possible extensions
-
-- **Cache the similarity edges, not just the embeddings.** Right now they're recomputed from cache on every server startup (4-5 seconds on Django), which is the one piece of the "how fast does this stay" answer that's still avoidable overhead.
-- **A real single-shot RAG benchmark.** RQ1's comparison was diluted by both conditions sharing the same iterative agent. Testing graph vs. flat-chunk retrieval with exactly one retrieval call and no follow-up would isolate structure's actual value instead of the agent's ability to compensate for weak retrieval.
-- **Type tracking for Python, TypeScript and Go.** Their extractors still only follow `self`/`this`, imports and receivers. Go and TypeScript declare types that could be read the way Java's are, and Python would need inference from assignments (`session = Session(); session.request()`). That's the biggest remaining source of unresolved calls in those three.
-- **Promote more languages to full support.** Ruby (with Rails' autoloading conventions), Swift and Dart are the next most used ones. They already get definitions, inheritance and calls through the generic tier; what they lack is import resolution.
-- **Publish to PyPI.** `pip install git+...` works today; an actual PyPI release is the remaining step between "installable" and "the way people normally install a Python tool."
+MIT, see [LICENSE](LICENSE).

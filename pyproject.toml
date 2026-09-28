@@ -26,6 +26,10 @@ codegraph-viz = "codegraph.cli:visualize"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# The 3D viewer's page template ships with the package, or `codegraph-viz` has nothing to render into.
+codegraph = ["templates/*.html"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]

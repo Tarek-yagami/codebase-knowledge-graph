@@ -1,6 +1,6 @@
 # Usage guide
 
-This is the practical how-to. For the research story (what this project actually found, and why), see the [README](../README.md).
+This is the practical how-to. For what the project found when it was tested, see the [research findings](RESEARCH.md).
 
 ## Quickstart
 
@@ -13,7 +13,7 @@ pip install .
 codegraph-viz /path/to/your/project
 ```
 
-That opens `data/graph3d.html` in your browser: a live, click-to-explore 3D graph of whatever codebase you pointed it at. Click a module or class to step inside it, click the surrounding shell (or empty space) to step back out.
+That writes `data/graph3d.html`. Open it in your browser for a live, click-to-explore 3D graph of whatever codebase you pointed it at. Click a module or class to step inside it, click the surrounding shell (or empty space) to step back out.
 
 ## Install options
 
@@ -88,7 +88,7 @@ If you installed the package, `.mcp.json` gets simpler:
 
 ## Reproducing the research
 
-This needs `requests` and Django cloned locally, since the findings in the README are tied to those exact repos.
+This needs `requests` and Django cloned locally, since the [research findings](RESEARCH.md) are tied to those exact repos.
 
 ```bash
 git clone --depth 1 https://github.com/psf/requests.git data/repos/requests

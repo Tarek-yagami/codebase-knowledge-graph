@@ -22,11 +22,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The 3D viewer shows each node's language.
 
 ### Changed
+- The README is now a short introduction for new visitors. The research write-up moved to `docs/RESEARCH.md` and the per-language details to `docs/LANGUAGES.md`.
 - Node ids are now file-path based (`pkg/models.py::User.save`) instead of dotted Python paths, so they stay unique across languages.
 - Requires Python 3.11+, for `tomllib` (Cargo.toml). Python 3.10 reaches end of life in October 2026.
 - Base classes no longer fall back to the first same-named class anywhere in the repo, which linked std traits like `Error` to unrelated types. They follow the same scope rules as calls.
 
 ### Fixed
+- `pip install` left out the 3D viewer's page template, so an installed `codegraph-viz` had nothing to render into.
 - An arrow function whose body is a single call (`() => g()`) didn't record that call.
 - A function calling the same target several times produced one edge per call site.
 - Nested functions were attached to the enclosing class or module instead of the function that defines them.
