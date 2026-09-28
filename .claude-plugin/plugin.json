@@ -1,0 +1,18 @@
+{
+  "name": "codegraph",
+  "version": "0.2.0",
+  "description": "Explore any repo as a 3D knowledge graph, and let Claude Code answer who-calls-what questions without reading every file.",
+  "author": {
+    "name": "Tarek-yagami"
+  },
+  "homepage": "https://tarek-yagami.github.io/codebase-knowledge-graph/",
+  "repository": "https://github.com/Tarek-yagami/codebase-knowledge-graph",
+  "license": "MIT",
+  "keywords": ["knowledge-graph", "static-analysis", "code-visualization", "mcp"],
+  "mcpServers": {
+    "codegraph": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/Tarek-yagami/codebase-knowledge-graph", "codegraph-mcp"]
+    }
+  }
+}

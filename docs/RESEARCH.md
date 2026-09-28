@@ -55,7 +55,7 @@ The hardest case can't be fixed at all, only acknowledged. Django defines `class
 
 Parsing Django's core package (846 files, about 12,000 nodes) takes single-digit seconds once the OS has the files cached, and up to around 12 seconds cold. Semantic embeddings for all ~11,000 functions and classes take about 2 minutes the very first time, then get cached to disk and load in well under a second after that.
 
-What isn't cached yet, and honestly should be: the semantic similarity edges get recomputed from the cached embeddings on every single server startup, which took about 4-5 seconds in testing on Django's scale. Combined with parsing and import overhead, a fresh MCP server launch against Django lands somewhere in the 10-25 second range depending on how warm the filesystem cache is. That's fine for a single demo session, since the server stays running once started, but it's real, measured latency, not an assumption, and caching the similarity edges alongside the embeddings would be the obvious next fix if this needed to feel instant on every single launch.
+At the time of these measurements, the semantic similarity edges were recomputed from the cached embeddings on every server startup, about 4-5 seconds on Django's scale, and a fresh MCP server launch against Django landed somewhere in the 10-25 second range. That has since been fixed at the root: no MCP tool actually used the similarity edges, so the server no longer computes them, and it builds the embedding index on the first semantic search instead of at startup. A launch now costs only the parse.
 
 ## Out of scope for now
 
@@ -63,7 +63,6 @@ Static analysis has real limits around dynamic dispatch and reflection, and thos
 
 ## What's next
 
-- **Cache the similarity edges, not just the embeddings.** Right now they're recomputed from cache on every server startup (4-5 seconds on Django), which is the one piece of the "how fast does this stay" answer that's still avoidable overhead.
 - **A real single-shot RAG benchmark.** RQ1's comparison was diluted by both conditions sharing the same iterative agent. Testing graph vs. flat-chunk retrieval with exactly one retrieval call and no follow-up would isolate structure's actual value instead of the agent's ability to compensate for weak retrieval.
 - **Type tracking for Python, TypeScript and Go.** Their extractors still only follow `self`/`this`, imports and receivers. Go and TypeScript declare types that could be read the way Java's are, and Python would need inference from assignments (`session = Session(); session.request()`). That's the biggest remaining source of unresolved calls in those three.
 - **Promote more languages to full support.** Ruby (with Rails' autoloading conventions), Swift and Dart are the next most used ones. They already get definitions, inheritance and calls through the generic tier; what they lack is import resolution.

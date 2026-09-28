@@ -52,7 +52,7 @@ Point this at any repo and it reads the code file by file, tracing every import,
   <tr>
     <td width="50%" valign="top">
       <h3>Search by meaning</h3>
-      <p>Ask for "code that retries a failed request" and find it even when nothing is named retry. Runs on a small local model, with no API key.</p>
+      <p>Ask for "code that retries a failed request" and find it even when nothing is named retry. Runs on a small local model, with no API key, as an optional extra.</p>
     </td>
     <td width="50%" valign="top">
       <h3>Works on real stacks</h3>
@@ -63,27 +63,31 @@ Point this at any repo and it reads the code file by file, tracing every import,
 
 ## Quick start
 
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/) installed. Then, inside Claude Code:
+
+```
+/plugin marketplace add Tarek-yagami/codebase-knowledge-graph
+/plugin install codegraph@codebase-knowledge-graph
+```
+
+Restart Claude Code and that's it. Claude Code now reaches for the graph on its own whenever a question is about how code connects, like "what calls `Session.send`?" or "what does this module depend on?". The plugin also adds three commands:
+
+| Command | What it does |
+|---|---|
+| `/codegraph:map` | Opens the current project as a 3D graph in your browser |
+| `/codegraph:impact` | Shows everything that depends on your uncommitted changes |
+| `/codegraph:tour` | Walks you through the codebase in the order its parts build on each other |
+
+The first run takes a minute while `uv` fetches the package. After that the server starts in seconds, even on a large repo.
+
+**Without Claude Code**, install the package and point it at any repo:
+
 ```bash
 pip install git+https://github.com/Tarek-yagami/codebase-knowledge-graph.git
 codegraph-viz /path/to/your/project
 ```
 
-That writes `data/graph3d.html`, which you open in your browser. Click a module to step inside it, and click the empty space around it to step back out. The first install takes a while, since semantic search pulls in PyTorch.
-
-To give Claude Code the map, add this to `.mcp.json` in the project you're working on:
-
-```json
-{
-  "mcpServers": {
-    "codegraph": {
-      "command": "codegraph-mcp",
-      "args": ["/absolute/path/to/your/project"]
-    }
-  }
-}
-```
-
-Then run `claude` in that folder and approve the `codegraph` server when it asks. The [usage guide](docs/USAGE.md) covers Docker, every tool the server offers, and troubleshooting.
+It opens the graph in your browser. Click a module to step inside it, and click the empty space around it to step back out. Semantic search is an optional extra because it pulls in PyTorch, so add `[semantic]` to the install if you want it. The [usage guide](docs/USAGE.md) covers every tool, Docker, and troubleshooting.
 
 ## Languages and frameworks
 

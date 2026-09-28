@@ -18,7 +18,7 @@ jobs:
         # The test suite doesn't touch embeddings.py's actual model, so
         # there's no need to pull in sentence-transformers/torch here.
         # Grammars download on first use, which the runner has network for.
-        run: pip install networkx numpy tree-sitter-language-pack json5 pytest
+        run: pip install networkx numpy tree-sitter-language-pack json5 "mcp>=2.0" pytest
 
       - name: Run tests
         run: pytest

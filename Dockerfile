@@ -13,4 +13,5 @@ RUN python -c "import tree_sitter_language_pack as t; t.download(['typescript', 
 COPY src/ src/
 COPY scripts/ scripts/
 
-ENTRYPOINT ["python", "scripts/visualize.py"]
+# No browser in a container: write into the mounted data folder instead.
+ENTRYPOINT ["python", "scripts/visualize.py", "--no-open", "--out", "data/graph3d.html"]

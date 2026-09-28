@@ -1,0 +1,14 @@
+{
+  "name": "codebase-knowledge-graph",
+  "owner": {
+    "name": "Tarek-yagami"
+  },
+  "description": "A 3D knowledge graph of your codebase, and the same map for Claude Code through MCP.",
+  "plugins": [
+    {
+      "name": "codegraph",
+      "source": "./",
+      "description": "Explore any repo as a 3D knowledge graph, and let Claude Code answer who-calls-what questions without reading every file."
+    }
+  ]
+}

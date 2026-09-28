@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codebase-knowledge-graph"
-version = "0.1.0"
+version = "0.2.0"
 description = "Turns a codebase in any major language into a live 3D knowledge graph and an MCP server Claude Code can query directly."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -13,10 +13,13 @@ dependencies = [
     "networkx>=3.2",
     "tree-sitter-language-pack>=1.20",
     "json5>=0.9",
-    "mcp>=1.0",
-    "sentence-transformers>=3.0",
-    "numpy>=1.26",
+    "mcp>=2.0",
 ]
+
+[project.optional-dependencies]
+# Semantic search pulls in PyTorch, so it's opt-in: the graph and every
+# structural tool work without it.
+semantic = ["sentence-transformers>=3.0", "numpy>=1.26"]
 
 [project.scripts]
 codegraph-mcp = "codegraph_mcp.server:main"

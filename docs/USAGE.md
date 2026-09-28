@@ -2,7 +2,20 @@
 
 This is the practical how-to. For what the project found when it was tested, see the [research findings](RESEARCH.md).
 
-## Quickstart
+## As a Claude Code plugin
+
+The easiest way in. You need [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, then inside Claude Code:
+
+```
+/plugin marketplace add Tarek-yagami/codebase-knowledge-graph
+/plugin install codegraph@codebase-knowledge-graph
+```
+
+After a restart, the `codegraph` MCP server runs against whatever project you open Claude Code in, and three commands are available: `/codegraph:map` opens the 3D graph, `/codegraph:impact` shows what depends on your uncommitted changes (or on files or a git range you name), and `/codegraph:tour` walks you through the codebase in dependency order, optionally focused on one area (`/codegraph:tour authentication`).
+
+The plugin installs the package without semantic search, which needs PyTorch. To turn it on, change the `--from` argument of the `codegraph` server in the plugin's `.claude-plugin/plugin.json` to `codebase-knowledge-graph[semantic] @ git+https://github.com/Tarek-yagami/codebase-knowledge-graph`.
+
+## Quickstart without Claude Code
 
 ```bash
 git clone https://github.com/Tarek-yagami/codebase-knowledge-graph.git
@@ -13,11 +26,11 @@ pip install .
 codegraph-viz /path/to/your/project
 ```
 
-That writes `data/graph3d.html`. Open it in your browser for a live, click-to-explore 3D graph of whatever codebase you pointed it at. Click a module or class to step inside it, click the surrounding shell (or empty space) to step back out.
+That opens a live, click-to-explore 3D graph of whatever codebase you pointed it at in your browser. The page is saved in codegraph's cache folder (`~/.cache/codegraph`, or wherever `CODEGRAPH_CACHE` points). Use `--out page.html` to write it somewhere else and `--no-open` to skip the browser. Click a module or class to step inside it, click the surrounding shell (or empty space) to step back out.
 
 ## Install options
 
-**As a package** (recommended, gives you the `codegraph-viz` and `codegraph-mcp` commands directly):
+**As a package** (gives you the `codegraph-viz` and `codegraph-mcp` commands directly). Add `[semantic]` after the package name, like `pip install '.[semantic]'`, to include semantic search:
 
 ```bash
 pip install .                                                                    # from a local clone
@@ -83,7 +96,8 @@ If you installed the package, `.mcp.json` gets simpler:
 
 - **"Pending approval" forever in `claude mcp list`**: that approval is granted at session startup, not by listing servers. Start a fresh `claude` session in the directory and approve it when asked.
 - **Windows: `claude` has no `.exe`, only `.cmd`/`.ps1`**: if you're scripting against it directly (like `experiments/_common.py` does), resolve the path with `shutil.which("claude")` rather than assuming a plain string works with `subprocess.run`.
-- **First MCP server launch against a large codebase is slow**: structural parsing isn't cached (by design, since it's fast, a few seconds even for a large repo) but embeddings are, so only the very first launch against a given repo pays the full cost, a couple of minutes for something Django-sized.
+- **The first semantic search on a large codebase is slow**: the server starts right away, but it builds the embedding index on the first `semantic_search` call, a couple of minutes for something Django-sized. The index is then cached, so later sessions load it in under a second.
+- **`semantic_search` says it needs an optional extra**: semantic search pulls in PyTorch, so it isn't installed by default. See the install options above.
 - **Docker image can't see your repo**: make sure both `-v` mounts are absolute paths, and on Git Bash, use `MSYS_NO_PATHCONV=1` (see above).
 
 ## Reproducing the research

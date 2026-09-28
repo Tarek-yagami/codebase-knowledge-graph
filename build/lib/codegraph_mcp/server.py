@@ -41,9 +41,7 @@ _graph = build_graph(parse_repo(REPO_PATH))
 # repo takes minutes, and the structural tools shouldn't wait for it.
 _embeddings: dict | None = None
 _SEMANTIC_MISSING = (
-    "Semantic search needs the optional `semantic` extra, which pulls in PyTorch. With pip: "
-    "pip install 'codebase-knowledge-graph[semantic]'. With the Claude Code plugin, point uvx at "
-    "'codebase-knowledge-graph[semantic] @ git+https://github.com/Tarek-yagami/codebase-knowledge-graph'."
+    "Semantic search needs the optional extra, which pulls in PyTorch: pip install 'codebase-knowledge-graph[semantic]'"
 )
 
 

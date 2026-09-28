@@ -2,7 +2,7 @@
 Once this package is installed (`pip install .`), use `codegraph-viz`
 instead, this just calls the same code.
 
-Usage: python scripts/visualize.py <path-to-repo> [title]
+Usage: python scripts/visualize.py <path-to-repo> [title] [--out PATH] [--no-open]
 """
 
 import sys

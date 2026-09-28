@@ -2,9 +2,11 @@
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.2.0] - 2026-09-28
 
 ### Added
+- A Claude Code plugin: `/plugin marketplace add Tarek-yagami/codebase-knowledge-graph`, then `/plugin install codegraph@codebase-knowledge-graph`. It runs the MCP server through `uvx` with no manual setup, and adds `/codegraph:map`, `/codegraph:impact` and `/codegraph:tour`.
+- `codegraph-viz` opens the graph in the browser and saves it to codegraph's cache folder, with `--out` and `--no-open` to change that.
 - Multi-language support. Full support (definitions, imports, calls, inheritance) for Python, TypeScript/JavaScript, Vue, Go, PHP, Java, Kotlin, C#, Rust, C and C++, and basic support (definitions, inheritance, calls) for any other language tree-sitter-language-pack has a tags query for, such as Ruby, Swift and Dart.
 - Mixed-language repos parse into one graph, with name resolution kept within each language.
 - Calls now resolve through import aliases (`from .a import f as g`, `import * as ns`, `pkg.F()` in Go) and to functions nested in the caller.
@@ -22,6 +24,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The 3D viewer shows each node's language.
 
 ### Changed
+- The MCP server starts in seconds: it no longer computes similarity edges (no tool used them) and builds the embedding index on the first semantic search instead of at startup.
+- Semantic search is an optional `semantic` extra, since it pulls in PyTorch. Without it, `semantic_search` explains how to enable it.
+- Requires `mcp` 2.0 or newer, which the server's imports already assumed.
+- Embeddings are cached in `~/.cache/codegraph` (or `CODEGRAPH_CACHE`) instead of next to the source.
 - The README is now a short introduction for new visitors. The research write-up moved to `docs/RESEARCH.md` and the per-language details to `docs/LANGUAGES.md`.
 - Node ids are now file-path based (`pkg/models.py::User.save`) instead of dotted Python paths, so they stay unique across languages.
 - Requires Python 3.11+, for `tomllib` (Cargo.toml). Python 3.10 reaches end of life in October 2026.
